@@ -24,7 +24,7 @@ export function Options(aDict) {
   numFramesInThisModule() is called, including and starting from the frame of the function
   call.  filename is as close as we can get to "module" in Javascript, so this is by filename.
  */
-import { get } from 'stack-trace';
+import { get } from 'stack-trace-anynode';
 export function numFramesInThisModule() {
     let frames = get(); // deepest stack frame is first
 
