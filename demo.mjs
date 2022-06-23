@@ -4,13 +4,11 @@ import { AppLogger } from './index.mjs';
 
 export var l = new AppLogger('demo', 0 /* verbose */);
 
-/*
-
 /**
  * Illustrates using the logger
  * @param {*} l - an AppLogger instance to log onto
- * /
-function doBasicLogging(l) {
+ */
+export function doBasicLogging(l) {
     l.error("I owe: $", 300 + 100, " dollars to my ex");
     l.warn("I don't have enough money in the bank:  $", 0);
     l.info("wise to pay your debts!");
@@ -30,7 +28,6 @@ demo: V2: demo.js:44: First it was $300
 demo: V2: demo.js:45: Then it was another $100
 `;
 }
-*/
 
 // Advanced usage
 

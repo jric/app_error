@@ -1,6 +1,6 @@
 {
   "name": "apperror_js",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Make logging and reporting of errors easier, more informative, and more consistent.",
   "main": "index.mjs",
   "scripts": {
@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "lodash-es": "^4.17.21",
-    "stack-trace": "file:../node-stack-trace",
+    "stack-trace-anynode": "^1.0",
     "serialize-anything": "^1.1.10"
   },
   "devDependencies": {
