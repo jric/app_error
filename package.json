@@ -1,0 +1,30 @@
+{
+  "name": "apperror_js",
+  "version": "1.1.0",
+  "description": "Make logging and reporting of errors easier, more informative, and more consistent.",
+  "main": "index.mjs",
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jric/apperror_js.git"
+  },
+  "dependencies": {
+    "lodash-es": "^4.17.21",
+    "stack-trace": "file:../node-stack-trace",
+    "serialize-anything": "^1.1.10"
+  },
+  "devDependencies": {
+    "mocha": "^10.0.0"
+  },
+  "keywords": [
+    "logging"
+  ],
+  "author": "Joshua Richardson <https://github.com/jric>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jric/apperror_js/issues"
+  },
+  "homepage": "https://github.com/jric/apperror_js#readme"
+}
