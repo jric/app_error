@@ -29,6 +29,19 @@ demo: V2: demo.js:45: Then it was another $100
 `;
 }
 
+/** Illustrates ensuring that verbose is explicitly set, if used */
+export function doCheckVerbose(l) {
+    let l1 = new AppLogger('here we set verbosity', 0 /* verbosity */);
+    l1.v1("won't print (verbose=0), but also won't throw an error, because verbosity explicitly set");
+    let l2 = new AppLogger('here we did not set verbosity');
+    try {
+        l2.v1("won't print (verbosity not set); will throw an error");
+    } catch (err) {
+        l.err(err.toString());
+    }
+    return 'demo: ERROR: demo.js:38: Error: verbosity not set on logger \'here we did not set verbosity\'';
+}
+
 // Advanced usage
 
 /**

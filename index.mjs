@@ -132,6 +132,12 @@ export function AppLogger(component_name, verbose, debug=false) {
         this.verbose = val;
     }
 
+    /** getVerbose() checks to make sure verbosity level has been set, else throws an error */
+    this.getVerbose = function() {
+        if (this.verbose==undefined) throw new Error("verbosity not set on logger '" + this.component + "'");
+        return this.verbose;
+    }
+
     /**
      * Turns on debugging, which is similar to verbose, but a different channel of logs.
      * This channel can have sub-channels which are named, so you can turn on debugging for a
@@ -239,7 +245,7 @@ export function AppLogger(component_name, verbose, debug=false) {
      *     printing to this.diagStream
      */
     this.v1 = function(msg, ...moreMsg) {
-        if (this.verbose)
+        if (this.getVerbose() > 0)
             this.commonOut('V1', msg, ...moreMsg);
     }
 
@@ -253,7 +259,7 @@ export function AppLogger(component_name, verbose, debug=false) {
      *     printing to this.diagStream
      */
     this.v2 = function(msg, ...moreMsg) {
-        if (this.verbose >= 2)
+        if (this.getVerbose() >= 2)
             this.commonOut('V2', msg, ...moreMsg);
     }
 
@@ -267,7 +273,7 @@ export function AppLogger(component_name, verbose, debug=false) {
      *     printing to this.diagStream
      */
      this.v3 = function(msg, ...moreMsg) {
-        if (this.verbose >= 3)
+        if (this.getVerbose() >= 3)
             this.commonOut('V3', msg, ...moreMsg);
     }
 
