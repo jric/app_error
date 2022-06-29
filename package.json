@@ -1,6 +1,6 @@
 {
   "name": "apperror_js",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "Make logging and reporting of errors easier, more informative, and more consistent.",
   "main": "index.mjs",
   "scripts": {

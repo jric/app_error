@@ -1,12 +1,3 @@
-/** This description documents many of the logging functions later in this module. */
-let LOG_FUNC_DESCRIPTION = `
-optional arguments can contain these keys:
- * extra_frames:  a positive integer indicating how many stack frames to
-     go up before reporting the code location of this diagnostic [default: 0]
- * as_string:  set True if you want a string back instead of printing to
-    self.diag_stream
-`;
-
 /**
  * Represents options to be used with the functions in this module.
  * @param {*} aDict : contains key-value pairs for the options
@@ -130,8 +121,6 @@ export function AppLogger(componentName, verbose, debug=false) {
     //   garbling; omit this for now
     // this.lock = undefined
     this.verbose = verbose;
-
-    this.LOG_FUNC_DESCRIPTION = LOG_FUNC_DESCRIPTION;
 
     /** for folks who prefer the Java bean style setter
      * @param {*} val : should be a number, typically between 0-3; 0 is mute, 3 is very verbose
