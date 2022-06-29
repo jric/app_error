@@ -15,17 +15,22 @@ var l = new AppLogger('demo');
  * @param {*} b : the actual string
  */
 let normFilepath = new RegExp(/\S*demo[^:]*:\d+/, 'g');
-let normPytest = new RegExp(/\S*pytest[3]?/);
+//let normPytest = new RegExp(/\S*pytest[3]?/);
+let normRemovePath = new RegExp(/\S+\/(\w+)/);  // replace file path with just the filename; too much variability in paths
 function assertMatching(a, b) {
     let a_lines = trim(a).split("\n");
     let b_lines = trim(b).split("\n");
     if (a_lines.length != b_lines.length)
-        throw new AssertionError({"message": "a has " + a_lines.length + ", but b has " + b_lines.length + " lines: a={" + a + "}, b={" + b + "}"});
+        throw new AssertionError({"message": "expected " + a_lines.length + " (a), but actual (b) has " + b_lines.length + " lines: a={" + a + "}, b={" + b + "}"});
     for (let i of Array.from({length: a_lines.length}, (x, i) => i)) {
         let a_line = trim(a_lines[i]).replace(normFilepath, 'demo:<LINE>');
-        a_line = a_line.replace(normPytest, 'pytest');
+        //a_line = a_line.replace(normPytest, 'pytest');
+        while (a_line.match(normRemovePath))
+            a_line = a_line.replace(normRemovePath, "$1");
         let b_line = trim(b_lines[i]).replace(normFilepath, 'demo:<LINE>');
-        b_line = b_line.replace(normPytest, 'pytest');
+        //b_line = b_line.replace(normPytest, 'pytest');
+        while (b_line.match(normRemovePath))
+            b_line = b_line.replace(normRemovePath, "$1");
         assert.equal(b_line, a_line); // actual, expected
     }
 }

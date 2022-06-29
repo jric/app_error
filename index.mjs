@@ -15,6 +15,11 @@ export function Options(aDict) {
     for (let [key, value] of Object.entries(aDict)) {
         this[key] = value;
     }
+
+    this.addFrames = function(number) {
+        this.extraFrames = (this.extraFrames??0) + number;
+    }
+
     return this;
 }
 
@@ -68,9 +73,11 @@ function isString(data) {
 function makeASCII(s) {
     if (isString(s))
         return Buffer.from(s, "ascii").toString();
-    else if (typeof s === 'number')
+    else if (typeof s == 'number')
         return s.toString();
-    else
+    else if (typeof s == 'object' && s.toString !== Object.prototype.toString && typeof s.toString == 'function') {
+        return s.toString();    
+    } else
         return JSON.stringify(JSON.parse(serAny.serialize(s))._SA_Content);
 }
 
@@ -111,10 +118,11 @@ let indexMatcher = new RegExp(/^index\..?js/); // index.js doesn't tell us much 
 
  */
 import * as process from 'process';
-export function AppLogger(component_name, verbose, debug=false) {  
-    this.component = makeASCII(component_name);
+import { l } from './demo.mjs';
+export function AppLogger(componentName, verbose, debug=false) {  
+    this.component = makeASCII(componentName);
     this.debugTags = new Set();
-    if (typeof debug === 'boolean' && debug)
+    if (typeof debug == 'boolean' && debug)
         this.debugTags.add('*');
     // diagnostic stream -- where to write messages
     this.diagStream = process.stderr;
@@ -151,17 +159,17 @@ export function AppLogger(component_name, verbose, debug=false) {
             tagsOrBool = ['*'];
         else if (tagsOrBool === false) {
             this.debugTags.clear();
-            tagsOrBool = []
-        } else if (isinstance(tagsOrBool, str))
+            tagsOrBool = [];
+        } else if (isString(tagsOrBool))
             tagsOrBool = [tagsOrBool];
         try {
-            for (let tag of tags_or_bool) {
+            for (let tag of tagsOrBool) {
                 this.debugTags.add(tag);
                 this.info(tag + " debugging enabled",
-                        extra_frames=numFramesInThisModule())
+                        new Options({"extraFrames": numFramesInThisModule()}));
             }
         } catch (e) {
-            throw new TypeError("Invalid type of argument for setDebug(): " + typeof tags_or_bool + ": " + e.toString());
+            throw new TypeError("Invalid type of argument for setDebug(): " + typeof tagsOrBool + ": " + e.toString());
         }
     }
 
@@ -208,6 +216,17 @@ export function AppLogger(component_name, verbose, debug=false) {
     }
 
     /**
+     * announceMyself() Writes diagnostic indicating arguments used to execute current program.
+     * @param {*} asString [default false] indicates whether to return a string, or write INFO level log message
+     * @returns 
+     */
+    this.announceMyself = function(asString=false) {
+        return this.info("called as: ", process.argv.join(' '),
+                     new Options({"extraFrames": 1, "asString": asString}));
+    }
+
+
+    /**
      * Only if debugging is set, log the given message.
      * 
      * Can be called like
@@ -226,12 +245,13 @@ export function AppLogger(component_name, verbose, debug=false) {
                 throw new Error("Tag must be a string, but is ", typeof tag, "; tag: ", makeASCII(tag));
             }
         }
-        if (tag in this.debugTags) {
-            options.extraFrames = 1;
+        //this.debug('tag: ', tag, '; debugTags: ', this.debugTags);
+        if (this.debugTags.has(tag) || this.debugTags.has('*')) {
+            //options.extraFrames = 1;
             let tagAdorn = '';
-            if (tag !== '*')
+            if (tag != '*')
                 tagAdorn = '[' + tag + ']';
-            this.commonOut('DEBUG', tag_adorn, ':', ...moreMsg, options);
+            this.commonOut('DEBUG' + tagAdorn, msg, ...moreMsg, options);
         }
     }
     
@@ -275,6 +295,25 @@ export function AppLogger(component_name, verbose, debug=false) {
      this.v3 = function(msg, ...moreMsg) {
         if (this.getVerbose() >= 3)
             this.commonOut('V3', msg, ...moreMsg);
+    }
+
+    /**
+     * ifverbose
+     * Only log if verbose, or if verbosity higher than given verbosity.
+     * @param {*} msg the message to log when verbosity > 0
+     * @param  {...any} moreMsg - more message to log, last arg can be Options:
+     *   level: only log if verbosity above this level
+     *   extraFrames:  a positive integer indicating how many stack frames to
+     *     go up before reporting the code location of this diagnostic [default: 0]
+     *   asString [default: false]:  set true if you want a string back instead of 
+     *     printing to this.diagStream
+     */
+    this.ifverbose = function(msg, ...moreMsg) {
+        let options = getOptions(moreMsg);
+        let lvl = options.level ?? 1;
+        l.ifdebug("lvl: ", lvl, "; this.verbose: ", this.verbose);
+        if (lvl <= this.verbose)
+            this.commonOut('V' + lvl, msg, ...moreMsg, options);
     }
 
     /**
@@ -325,4 +364,349 @@ export function AppLogger(component_name, verbose, debug=false) {
     }
 
     return this;
+}
+
+/**
+ * AppStatus - object represents a status; can add diagnostics and values and retrieve them
+ * 
+ * Instead of using a logger, which has to write to a stream, you can pass this AppStatus object up and
+      down your call stack and deal with the errors, warnings, etc. at a point of your application's
+      choosing.
+    Functions that return values, also store those values into this object.
+ * 
+ * @param msg - If provided, an error is created for this status
+ * @param moreMsg - Additional things to write into the error message, or the final item in this list
+ *   can be an Options object; currently only this one is supported
+ *    - extraFrames - an integer number of stack frames that should be skipped when logging the location of a
+        diagnostic message
+ * 
+ * @returns A new AppStatus object (call with new)
+ */
+
+export class AppStatus {
+    constructor (msg, ...moreMsg) {
+        this._info = [];
+        this.warnings = [];
+        this.errors = [];
+        this.lastError = '';
+        // let options = getOptions(moreMsg);
+        // options.addFrames(1);
+        if (msg !== undefined)
+            this.addError(msg, ...moreMsg);
+        this.value = undefined;
+    }
+
+    /**
+     * toString()
+     * 
+     * Provides for printable view of this status object.
+     * 
+     * Shows errors first, if any, then warnings, if any, then info, if any.
+     * 
+     * If custom attributes have been set on the object, then those are displayed at the end.
+     * 
+     */
+    toString() {
+        let buff = '';
+        if (this.hasErrors())
+            buff += this.errorMsg();
+        if (this.warnings.length) {
+            if (buff.length)
+                buff += "; ";
+            buff += this.warnMsg();
+        }
+        if (this._info.length) {
+            if (buff.length)
+                buff += "; ";
+            buff += this.infoMsg();
+        }
+        if (! buff.length)
+            buff = 'ok';
+        
+        let xtraAttrs = this.xtraAttrsToStr();
+        if (xtraAttrs.length) {
+            buff += '; '
+            buff += xtraAttrs;
+        } 
+        
+        return buff;
+    }
+    
+    /**
+     * xtraAttrsToStr()
+     * 
+     * @returns String representation of any extra values (aka attributes) that were set on this status object.
+     */
+    xtraAttrsToStr() {
+        let extraAttrs = this.getExtraAttrs();
+
+        return (extraAttrs.keys().length ? "extra attributes: " + extraAttrs.toString() : '');
+    }
+    
+    /**
+     * dedup()
+     * 
+     * Identifies duplicate messages and dedups them but appends the count, e.g.
+     *   No such key found 'foo' (x14)
+     * 
+     * @param msg - a list of messages, will be de-duplicated
+     */    
+    dedup(msgs) {
+        let counts = new Map();
+        for (let msg of msgs)
+            if (counts.has(msg))
+                counts.set(msg, counts.get(msg) + 1);
+            else
+                counts.set(msg, 1);
+        msgs.length = 0;
+        for (let [key, val] of counts.entries())
+            if (val > 1)
+                msgs.push(key + " (x" + val + ')');
+            else
+                msgs.push(key);
+    }
+    
+    /**
+     * Creates the adorned message (adding line number, filename, etc.); starts at the first
+     *   stack frame outside this module
+     * @param {*} msg - the message to adorn
+     * @param  {...any} moreMsg - more message components and/or final argument can be Options:
+     *    - extraFrames : number of extra frames to move up, before reporting the code location
+     * @returns the adorned message
+     */
+    #getAdornedMsg(msg, ...moreMsg) {
+        let extraFrames=numFramesInThisModule();
+
+        let options = getOptions(moreMsg)?? new Options();
+        options.addFrames(extraFrames);
+        return adorn(msg, ...moreMsg, options);
+    }
+    
+    /**
+     * Adds an INFO-level message to the status object.
+     * @param {*} msg - anything to log
+     * @param  {...any} moreMsg; more to log and/or last item can be Options:
+     *   - extraFrames: extra frames to move up before capturing the code location of the message
+     * @returns the status object itself (for chaining)
+     */
+    addInfo(msg, ...moreMsg) {
+        let adornedMsg = this.#getAdornedMsg(msg, ...moreMsg);
+        l.ifdebug("adorned message: ", adornedMsg);
+        this._info.push(adornedMsg);
+        return this;
+    }
+
+    /**
+     * Adds a WARN-level message to the status object.
+     * @param {*} msg - anything to log
+     * @param  {...any} moreMsg  - more to log and/or last item can be Options:
+     *   - extraFrames: extra frames to move up before capturing the code location of the message
+     * @returns the status object itself (for chaining)
+     */
+    addWarning(msg, ...moreMsg) {
+        let adornedMsg = this.#getAdornedMsg(msg, ...moreMsg);
+        this.warnings.push(adornedMsg);
+        return this;
+    }
+    
+    /**
+     * Adds a WARN-level message to the status object.  (Alias for addWarning().)
+     * @param {*} msg - anything to log
+     * @param  {...any} moreMsg  - more to log and/or last item can be Options:
+     *   - extraFrames: extra frames to move up before capturing the code location of the message
+     * @returns the status object itself (for chaining)
+     */
+    addWarn(msg, ...moreMsg) {
+        return this.addWarning(msg, ...moreMsg);
+    }
+
+    /**
+     * Adds a ERROR-level message to the status object.
+     * @param {*} msg - anything to log
+     * @param  {...any} moreMsg  - more to log and/or last item can be Options:
+     *   - extraFrames: extra frames to move up before capturing the code location of the message
+     * @returns the status object itself (for chaining)
+     */
+     addError(msg, ...moreMsg) {
+        let adornedMsg = this.#getAdornedMsg(msg, ...moreMsg);
+        this.errors.push(adornedMsg);
+        this.lastError = adornedMsg;
+        return this;
+    }
+
+    /**
+     * Combines the diagnostics from another status object to this object.
+     * @param {*} other - another status object
+     * @returns - this status object (for chaining)
+     */
+    addStatus(other) {
+        if (! other instanceof AppStatus)
+            throw new Error("addStatus() is for merging in another AppStatus object; object type is " + typeof other);
+        this.errors.push(...other.errors);
+        if (other.lastError)
+            this.lastError = other.lastError;
+        this.warnings.push(...other.warnings);
+        this._info.push(...other._info);
+        if (other.value !== undefined)
+            this.value = other.value;
+        for (let [key, val] of other.getExtraAttrs().entries())
+            this[key] = val;
+        
+        return this;
+    }
+    
+    /**
+     * Sets a return value on the status object.
+     * @param {*} val - the value to set
+     * @returns the status object (for chaining)
+     */
+    addValue(val) {
+        this.value = val;
+        
+        return this;
+    }
+    
+    /**
+     * Alias for !hasErrors()
+     * @returns true iff status has no errors, else false
+     */
+    ok() {
+        return ! this.hasErrors();
+    }
+    
+    /**
+     * Does this status object have errors attached to it?
+     * @returns true iff status has errors, else false
+     */
+    hasErrors() {
+        return this.errors.length > 0;
+    }
+    
+    /**
+     * Removes errors from the status object.
+     * 
+     * @returns this status object (for chaining)
+     */
+    clearErrors() {
+        this.errors = [];
+
+        return this;
+    }
+    
+    /**
+     * Does this status object have warnings attached to it?
+     * @returns true iff status has warnings, else false
+     */
+    hasWarnings() {
+        return this.warnings.length > 0;
+    }
+    
+    /**
+     * Removes warnings from the status object.
+     * 
+     * @returns this status object (for chaining)
+     */
+    clearWarnings() {
+        this.warnings = [];
+    }
+    
+    /**
+     * Does this status object have info attached to it?
+     * @returns true iff status has info, else false
+     */
+    hasInfo() {
+        return this._info.length > 0;
+    }
+
+    /**
+     * Removes info from the status object.
+     * 
+     * @returns this status object (for chaining)
+     */
+    clearInfo() {
+        this._info = [];
+        return this;
+    }
+
+    /**
+     * Deduplicates info messages (see dedup())
+     */
+    dedupInfo() {
+        this.dedup(this._info);
+    }
+
+    /** log()
+     * spit out any diagnostics to the logger at the corresponding log levels
+     * @param msg - optional message / Options
+     */
+    log(logger, ...msg) {
+        let prepend = '';
+        let options = getOptions(msg)?? new Options();
+        options.addFrames(1);
+        if (msg.length)
+            prepend = msg.map(x => makeASCII(x)) + ": ";
+        if (this.hasErrors())
+            logger.error(prepend, this.errMsg(), options);
+        if (this.hasWarnings())
+            logger.warn(prepend, this.warnMsg(), options);
+        if (this.hasInfo())
+            logger.info(prepend, this.infoMsg(), options);
+    }
+
+    /**
+     * infoMsg
+     * @returns all INFO level messages in the status object as a single string
+     */
+    infoMsg() {
+        return this._info.length ? 'INFO: ' + this._info.join('; ') : '';
+    }
+
+    /**
+     * warnMsg
+     * @returns all WARN level messages in the status object as a single string
+     */
+    warnMsg() {
+        return this.warnings.length ? 'WARN: ' + this.warnings.join('; ') : '';
+    }
+
+    /**
+     * errorMsg
+     * @returns all ERROR level messages in the status object as a single string
+     */
+    errorMsg() {
+        return this.errors.length ? 'ERROR: ' + this.errors.join('; ') : '';
+    }
+
+    /**
+     * errMsg - alias for errorMsg()
+     * @returns all ERROR level messages in the status object as a single string
+     */
+    errMsg() { return this.errorMsg(); }
+
+    /**
+     * getInfo
+     * @returns list of INFO level messages attached to this status object
+     */
+    getInfo() { return this._info; }
+
+    /**
+     * @returns value assigned to this status object
+     */
+    getValue() { throw new Error("Unimplemented - redefine after AppError declared"); }
+
+    /**
+     * getExtraAttrs
+     * @returns a Map of the extra attributes (aka values) assigned to this status object
+     */
+    getExtraAttrs() {
+        let xtraAttrs = new Map();
+        for (let key of Object.getOwnPropertyNames(this)) {
+            if (!key.length || key[0] == '_') continue;
+            if (key in ['_info', 'warnings', 'errors', 'last_error']) continue;
+            if (key == 'value' && this.value === undefined) continue;
+            xtraAttrs[key] = this[key];
+        }
+
+        return xtraAttrs;
+    }
 }
