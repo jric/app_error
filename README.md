@@ -327,7 +327,7 @@ demo: INFO: demo.mjs:296: called as: node mocha
 
 ## Changelog
 
-1.4.0: Added AppStatus
+1.4.0: Added AppStatus and a bunch of tests.
 
 ## For Maintainers
 
