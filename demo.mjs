@@ -303,6 +303,3 @@ export function doAnnounceMyself(l) {
 demo: INFO: demo.mjs:296: called as: node mocha
 `;
 }
-
-doTellMeHowDeepIAm(l);
-doAdornMessage(l);

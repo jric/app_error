@@ -81,7 +81,7 @@ function makeASCII(s) {
  * Options object may contain:
  *   extraFrames:  how many extra frames to go up, when capturing file/lineno
  */
-let indexMatcher = new RegExp(/^index\..?js/); // index.js doesn't tell us much about a module
+var indexMatcher = new RegExp(/^index\..?js/); // index.js doesn't tell us much about a module
  export function adorn(msg, ...moreMsg) {
     let options = getOptions(moreMsg);
     let extraFrames = options?.extraFrames ?? 0; // by default, we use calling stack frame

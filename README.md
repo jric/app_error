@@ -327,6 +327,7 @@ demo: INFO: demo.mjs:296: called as: node mocha
 
 ## Changelog
 
+1.4.2: Another patch for a reference error when loaded from other modules.
 1.4.1: Removed unused member of AppLogger causing reference error when loaded from other modules.
 1.4.0: Added AppStatus and a bunch of tests.
 
