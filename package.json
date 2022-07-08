@@ -1,11 +1,14 @@
 {
   "name": "apperror_js",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "description": "Make logging and reporting of errors easier, more informative, and more consistent.",
   "main": "index.mjs",
   "scripts": {
     "test": "mocha"
   },
+  "files": [
+    "index.mjs"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/jric/apperror_js.git"
