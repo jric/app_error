@@ -58,15 +58,25 @@ function isString(data) {
 /**
  * Turn anything into a compact ASCII string
  * @param {*} s : object that we want to make into an ascii string
+ * @param canonical : if true, strings are encoded as JSON (inside double-quotes)
  * @returns the ascii string
  */
  import * as serAny from 'serialize-anything';
-function makeASCII(s) {
+export function makeASCII(s, canonical) {
     if (isString(s))
-        return Buffer.from(s, "ascii").toString();
+        if (canonical)
+            return '"' + Buffer.from(s, "ascii").toString() + '"';
+        else
+            return Buffer.from(s, "ascii").toString();
+    else if (s === null)
+        return 'null';
+    else if (s === undefined)
+        return 'undefined'
     else if (typeof s == 'number')
         return s.toString();
-    else if (typeof s == 'object' && s.toString !== Object.prototype.toString && typeof s.toString == 'function') {
+    else if (s instanceof Map)
+        return '{' + Array.from(s.entries()).map((x) => makeASCII(x[0], true /* canonical */) + ':' + makeASCII(x[1], true /* canonical */)).join(',') + '}';
+    else if (typeof s == 'object' && !Array.isArray(s) && s.toString !== Object.prototype.toString && typeof s.toString == 'function') {
         return s.toString();    
     } else
         return JSON.stringify(JSON.parse(serAny.serialize(s))._SA_Content);
@@ -174,6 +184,32 @@ export function AppLogger(componentName, verbose, debug=false) {
     }
 
     /**
+     * Set the verbose and debug levels from an object which should either be
+     * - a dictionary with keys '--verbose' and '--debug', or
+     * - an object with attributes 'verbose' and 'debug'
+     * Value of debug can be a comma-seperated list of channel names to enable debugging for,
+     *   or they can be passed as separate options
+    */
+    this.setFromArgs = function(args) {
+        let verbose = args['verbose'] ?? args['--verbose'] ?? (typeof args.get == 'function' ? args.get('--verbose') : 0);
+        this.verbose = (typeof verbose == 'object' ? verbose.length : verbose) ?? verbose | 0; // convert to number
+    
+        let debug = args['debug'] ?? args['--debug'] ?? (typeof args.get == 'function' ? args.get('--debug') : false);
+        
+        let debugTags = [];
+
+        try {
+            for (let tag of debug)
+                debugTags.push(...tag.split(','));
+        } catch {
+             // debug option that is not iterable treated as true/false instead
+             if (debug) debugTags.push('*');
+        }
+
+        this.setDebug(debugTags);
+    }
+
+    /**
      * Used to write diagnostic message at given log level.
      * 
      * @param {*} lvl - any string to indicate log level, e.g. 'INFO', 'WARN', 'ERROR', 'DEBUG', 'V1", etc.
@@ -219,13 +255,13 @@ export function AppLogger(componentName, verbose, debug=false) {
      * Only if debugging is set, log the given message.
      * 
      * Can be called like
-     *   ifdebug(msg)
+     *   ifDebug(msg)
      * or with any or all log options:
-     *   ifdebug(msg, new Options({"tag": "mytag",  // select only certain tagged messages
+     *   ifDebug(msg, new Options({"tag": "mytag",  // select only certain tagged messages
      *                             "extraFrames": 1,
      *                             "asString": true}))
      */
-    this.ifdebug = function(msg, ...moreMsg) {
+    this.ifDebug = function(msg, ...moreMsg) {
         let options = getOptions(moreMsg);
         let tag = '*';
         if ('tag' in options) { 
@@ -287,7 +323,7 @@ export function AppLogger(componentName, verbose, debug=false) {
     }
 
     /**
-     * ifverbose
+     * ifVerbose
      * Only log if verbose, or if verbosity higher than given verbosity.
      * @param {*} msg the message to log when verbosity > 0
      * @param  {...any} moreMsg - more message to log, last arg can be Options:
@@ -297,10 +333,10 @@ export function AppLogger(componentName, verbose, debug=false) {
      *   asString [default: false]:  set true if you want a string back instead of 
      *     printing to this.diagStream
      */
-    this.ifverbose = function(msg, ...moreMsg) {
+    this.ifVerbose = function(msg, ...moreMsg) {
         let options = getOptions(moreMsg);
         let lvl = options.level ?? 1;
-        l.ifdebug("lvl: ", lvl, "; this.verbose: ", this.verbose);
+        l.ifDebug("lvl: ", lvl, "; this.verbose: ", this.verbose);
         if (lvl <= this.verbose)
             this.commonOut('V' + lvl, msg, ...moreMsg, options);
     }
@@ -429,7 +465,7 @@ export class AppStatus {
     xtraAttrsToStr() {
         let extraAttrs = this.getExtraAttrs();
 
-        return (extraAttrs.keys().length ? "extra attributes: " + extraAttrs.toString() : '');
+        return (extraAttrs.size ? "extra attributes: " + makeASCII(extraAttrs) : '');
     }
     
     /**
@@ -480,7 +516,7 @@ export class AppStatus {
      */
     addInfo(msg, ...moreMsg) {
         let adornedMsg = this.#getAdornedMsg(msg, ...moreMsg);
-        l.ifdebug("adorned message: ", adornedMsg);
+        l.ifDebug("adorned message: ", adornedMsg);
         this._info.push(adornedMsg);
         return this;
     }
@@ -679,23 +715,44 @@ export class AppStatus {
     getInfo() { return this._info; }
 
     /**
-     * @returns value assigned to this status object
+     * @returns value assigned to this status object; clear errors before getting value
      */
-    getValue() { throw new Error("Unimplemented - redefine after AppError declared"); }
+    getValue() {
+        if (this.hasErrors())
+            throw new AppError("You must clear errors on status object before accessing value: ", this.errMsg());
+        return this.value;
+    }
 
     /**
      * getExtraAttrs
-     * @returns a Map of the extra attributes (aka values) assigned to this status object
+     * @returns a Map of the extra attributes (aka values) assigned to this status object - including
+     *  any value from setValue()
      */
     getExtraAttrs() {
         let xtraAttrs = new Map();
         for (let key of Object.getOwnPropertyNames(this)) {
             if (!key.length || key[0] == '_') continue;
-            if (key in ['_info', 'warnings', 'errors', 'last_error']) continue;
-            if (key == 'value' && this.value === undefined) continue;
-            xtraAttrs[key] = this[key];
+            if (['_info', 'warnings', 'errors', 'lastError'].includes(key)) continue;
+            if (key == 'value' && this[key] === undefined) continue;
+            xtraAttrs.set(key, this[key]);
         }
 
         return xtraAttrs;
+    }
+}
+
+/** A javascript Error object that is created just like an AppStatus object and can be used as such with the toStatus() member.
+    @see AppStatus for more information on parameters and behavior */
+export class AppError extends Error {
+    /** @see AppStatus init for more information on parameters and behavior */
+    constructor (msg, ...moreMsg) {
+        let status = new AppStatus(msg, ...moreMsg);
+        super(status.toString());
+        this.status = status;
+        this.name = "AppError";
+    }
+        
+    toStatus() {
+        return this.status;
     }
 }
