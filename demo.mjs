@@ -217,17 +217,21 @@ demo: ERROR: demo.mjs:186: ERROR: demo.mjs:182: demo.mjs:177: I think the wheels
 /** adding a return value to status object (e.g. to pass it up the call stack along with the diagnostics) */
 export function doAddValueToStatus(l1) {
     let s = new AppStatus("Houston, we have a problem");
+    l1.info("status hasValue(): ", s.hasValue()); // no value yet, but ok to check
     s.addValue("foo");
     try {
         l1.info("got value '", s.getValue(), "'");
     } catch (err) {
         l1.warn(err);
+        l1.info("status hasValue(): ", s.hasValue()); // ok to see if there is a value; just don't retrieve until handling errors
         s.clearErrors(); // normally, handle errors before clearing them (e.g. log them)
         l1.info("got value '", s.getValue(), "'");  // now, no problem
     }
     return `
-demo: WARN: demo.mjs:202: AppError: ERROR: demo.mjs:200: You must clear errors on status object before accessing value: ERROR: demo.mjs:197: Houston, we have a problem
-demo: INFO: demo.mjs:204: got value 'foo'
+demo: INFO: demo.mjs:220: status hasValue(): false
+demo: WARN: demo.mjs:225: AppError: ERROR: demo.mjs:223: You must clear errors on status object before accessing value: ERROR: demo.mjs:219: Houston, we have a problem
+demo: INFO: demo.mjs:226: status hasValue(): true
+demo: INFO: demo.mjs:228: got value 'foo'
 `;
 }
 

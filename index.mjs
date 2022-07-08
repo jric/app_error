@@ -727,6 +727,13 @@ export class AppStatus {
     }
 
     /**
+     * @returns true iff the status has a value set
+     */
+    hasValue() {
+        return this.value === undefined ? false : true;
+    }
+
+    /**
      * getExtraAttrs
      * @returns a Map of the extra attributes (aka values) assigned to this status object - including
      *  any value from setValue()
