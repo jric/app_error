@@ -97,17 +97,18 @@ export function doCheckVerbose(l) {
     return 'demo: ERROR: demo.js:38: Error: verbosity not set on logger \'here we did not set verbosity\'';
 }
 
+/** helper function to show effects of verbosity */
+function showVerbosity(l) {
+    let v2 = new Options({"level": 2});    
+    l.ifVerbose("ok, we're verbose!");
+    l.ifVerbose("very verbose!", v2);          // checks verbosity >=2 before writing log
+    if (l.verbose > 2)                         // manual check, verbosity >=3 before writing
+        l.warn("we're too darned verbose!");
+}
+
 /** Illustrates how to change verbosity of logger */
 export function doShowVerbose(l) {
     // helper function
-    let v2 = new Options({"level": 2});
-    function showVerbosity(l) {
-        l.ifverbose("ok, we're verbose!");
-        l.ifverbose("very verbose!", v2);          // checks verbosity >=2 before writing log
-        if (l.verbose > 2)                         // manual check, verbosity >=3 before writing
-            l.warn("we're too darned verbose!");
-    }
-    
     let l1 = new AppLogger('demo', 2 /* verbose */);  // can set verbosity in the constructor
     l1.diagStream = l.diagStream;
     showVerbosity(l1);
@@ -127,6 +128,27 @@ demo: V1: demo.mjs:68: ok, we're verbose!
 `;
 }
 
+/** turn anything in javascript to a compact string representation */
+import { makeASCII } from './index.mjs';
+export function doMakeASCII(l1) {
+    l1.info('a string: ', makeASCII('foo'));
+    l1.info('a number: ', makeASCII(42));
+    l1.info('null: ', makeASCII(null));
+    l1.info('undefined: ', makeASCII(undefined));
+    l1.info('an array: ', makeASCII(['foo', 42]));
+    l1.info('an object: ', {'foo': 42});
+    l1.info('a map: ', makeASCII(new Map().set('foo', 42)));
+    return `
+demo: INFO: demo.mjs:98: a string: foo
+demo: INFO: demo.mjs:98: a number: 42
+demo: INFO: demo.mjs:98: null: null
+demo: INFO: demo.mjs:98: undefined: undefined
+demo: INFO: demo.mjs:98: an array: ["foo",42]
+demo: INFO: demo.mjs:98: an object: {"foo":42}
+demo: INFO: demo.mjs:98: a map: {"foo":42}
+`;
+}
+
 // Intermediate usage - debug and tag / filter the messages
 
 export function doShowDebug(l) {
@@ -134,9 +156,9 @@ export function doShowDebug(l) {
     let mathTag = new Options({"tag": "math"});
     let spellingTag = new Options({"tag": 'spelling'});
     function showDebugLevel(l) {
-        l.ifdebug("we're debuggin!");                          // only shows if debug set to true or '*'
-        l.ifdebug(5, " =? ", 2 + 3, mathTag);                  // only shows if debug includes '*' or 'math'
-        l.ifdebug("spelling is a breeze", spellingTag);        // only shows if debug includes '*' or 'spelling'
+        l.ifDebug("we're debuggin!");                          // only shows if debug set to true or '*'
+        l.ifDebug(5, " =? ", 2 + 3, mathTag);                  // only shows if debug includes '*' or 'math'
+        l.ifDebug("spelling is a breeze", spellingTag);        // only shows if debug includes '*' or 'spelling'
     }
     
     let l1 = new AppLogger('second-logger', 0 /* verbose */, true /* debug */);  // can set in the constructor
@@ -228,6 +250,23 @@ demo: ERROR: demo.mjs:186: ERROR: demo.mjs:182: demo.mjs:177: I think the wheels
 `
 }
 
+/** adding a return value to status object (e.g. to pass it up the call stack along with the diagnostics) */
+export function doAddValueToStatus(l1) {
+    let s = new AppStatus("Houston, we have a problem");
+    s.addValue("foo");
+    try {
+        l1.info("got value '", s.getValue(), "'");
+    } catch (err) {
+        l1.warn(err);
+        s.clearErrors(); // normally, handle errors before clearing them (e.g. log them)
+        l1.info("got value '", s.getValue(), "'");  // now, no problem
+    }
+    return `
+demo: WARN: demo.mjs:202: AppError: ERROR: demo.mjs:200: You must clear errors on status object before accessing value: ERROR: demo.mjs:197: Houston, we have a problem
+demo: INFO: demo.mjs:204: got value 'foo'
+`;
+}
+
 /** adding additional values to the status object */
 export function doAddAdditionalValuesToStatus(l) {
     let s = new AppStatus();
@@ -235,8 +274,8 @@ export function doAddAdditionalValuesToStatus(l) {
     s.myFooValue = "foo";
     l.info("my status also has value ", s.myOtherValue);
     
-    // getExtraAttrs() returns a Map with all the custom values as kv pairs (does not include s.getValue())
-    l.info("custom value: ", s.getExtraAttrs()["myOtherValue"]);
+    // getExtraAttrs() returns a Map with all the custom values as kv pairs
+    l.info("custom value: ", s.getExtraAttrs().get("myOtherValue"));
     return `
 demo: INFO: demo.mjs:207: my status also has value bar
 demo: INFO: demo.mjs:210: custom value: bar
@@ -270,7 +309,148 @@ demo: INFO: demo.mjs:236: at the end of the day, the wheels fell off
 `;
 }
 
+/** converting between status object and exception */
+export function doSwitchBetweenStatusAndException(l) {
+    let s = new AppStatus("the wheels fell off the bus");
+    try {
+        // We can turn the status object to an AppError exception
+        throw new AppError(s); // same as new AppError(s.toString());
+        // Or we can directly create the AppError as easily as an AppStatus object
+        throw new AppError("Unexpectedly, we still have ", 4, " wheels");
+    } catch (err) {
+        // we turn the exception back to a status object, e.g. to combine it with other status objects, etc.
+        let currentStatus = err instanceof AppError ? err.toStatus() : null;
+        if (currentStatus) {
+            currentStatus.addWarn("Now we can do more with the status object");
+            l.info(currentStatus);
+        } else {
+            l.err('Unexpected exception: ', err.message);
+        }
+    }
+    return `
+demo: INFO: demo.mjs:268: ERROR: demo.mjs:260: ERROR: demo.mjs:257: the wheels fell off the bus; WARN: demo.mjs:267: Now we can do more with the status object
+`;
+}
+
+/** Sometimes you want to attach multiple values to an AppStatus, as a return value. 
+ * You can find out which extra attributes have been added. */
+export function doGetExtraAttributes(l1) {
+    // 800-464-4000
+    let s = new AppStatus();
+    s.addValue(2); // this value is reported as an "extra" attribute
+    s.addWarn("haha"); // diagnostics are not: error, warning, info, debug, v1, ...
+    s.foo = "bar";
+    let e = s.getExtraAttrs();
+    l1.info('extra attributes: ', Array.from(e.keys()).sort());
+    l1.info('foo: ', e.get('foo'));
+    return `
+    demo: INFO: demo.mjs:286: extra attributes: ["foo","value"]
+    demo: INFO: demo.mjs:287: foo: bar
+`;
+}
+
+/** merging status objects together
+  *   Handy to keep track of the cumulative outcome of multiple, but unrelated function calls
+  */
+function _getMergedStatusObjects() {
+    let s1 = new AppStatus().addInfo("Stuff is going well").addValue(1);
+    let s2 = new AppStatus("This time we blew it").addValue(2);
+    s2.foo = 'bar';  // extra attribute
+    // here we'll combine the info, error, and custom values set on both status objects, but when there are
+    //   conflicts, the last status object wins, so value will be 2
+    s1.addStatus(s2);
+    return s1;
+}
+
+export function doMergeStatusObjects(l1) {
+    let s1 = _getMergedStatusObjects();
+    l1.info(s1);
+    return `
+    demo: INFO: demo.mjs:196: ERROR: demo.mjs:191: This time we blew it; INFO: demo.mjs:190: Stuff is going well; extra attributes: {"value":2,"foo":"bar"}
+`;
+}
+
+/**
+## Logging all status levels at the appropriate log level
+### The logger will create an INFO for each info entry in the status object, a WARN entry for each warn
+###  etnry, etc.
+ */
+export function doLogAllLevels(l) {
+    let s1 = _getMergedStatusObjects();
+    s1.log(l);
+    // we can also prepend a custom message to each of those log lines
+    s1.log(l, "This is how it went down");
+    return `
+demo: ERROR: demo.mjs:284: ERROR: demo.mjs:191: This time we blew it
+demo: INFO: demo.mjs:284: INFO: demo.mjs:190: Stuff is going well
+demo: ERROR: demo.mjs:286: This is how it went down: ERROR: demo.mjs:191: This time we blew it
+demo: INFO: demo.mjs:286: This is how it went down: INFO: demo.mjs:190: Stuff is going well
+`;
+}
+
 // Advanced usage
+
+/** capture all log messages into a buffer  */
+import {PassThrough} from 'node:stream';
+export function doCaptureIntoABuffer(l) {
+    let buff = new PassThrough();
+    let restore = l.diagStream;
+    l.diagStream = buff;
+    l.info("logging to a buffer now - we have to take care not to log more than the default buffer size before reading the data back");
+    l.diagStream = restore;
+    l.info("logging normally again; earlier we got: " + buff.read());
+    buff.end(); // ends write stream
+    buff.destroy(); // ends read stream
+    return `
+demo: INFO: demo.mjs:305: logging normally again; earlier we got: demo: INFO: demo.mjs:301: logging to a buffer now - we have to take care not to log more than the default buffer size before reading the data back
+`;
+}
+
+/** easily set log levels from your commandline arguments
+  *   -- only works if you're using a "standard" commandline parser like docopt and you define 'debug' or 'verbose'
+  *   arguments, which will set 'debug'/'verbose' properties in your object or keys in a dict
+  */
+ import {docopt} from 'docopt';
+ export function doSetFromArgs(l1) {
+    let usage = `
+Usage: 
+  demo [--verbose]... [--debug]
+  `;
+    let args = docopt(usage, {argv: ['--verbose', '--verbose'], version: 'demo 1.0'});
+    l.v1("arguments from docopt: ", args);
+    l1.setFromArgs(args);
+    showVerbosity(l1);  // will show how verbose we are, depending on which arguments were passed to demo
+    return `
+demo: V1: demo.mjs:78: ok, we're verbose!
+demo: V2: demo.mjs:79: very verbose!
+`;
+}
+
+/** logging a line from higher in the call stack
+  * When you have an error handler you don't want to put the file location of the handler in the log.  
+  *  Instead, you want to log the location where the error was detected.  All of the logger functions have 
+  *  the ability to specify higher stack frames to use when constructing the log message.
+  *  See this example:
+  */
+export function doHideDeepCallStack(l) {
+    /** We return the string, instead of logging immediately because of asString parameter */
+    function constructStatus(msg) {
+        return l.error("I'm deep in the error handler: ", msg, new Options({extraFrames: 2, asString: true}));
+    }
+    /**
+     *  Maybe I want to send diagnostics somewhere other than the standard log file, or do other processing on errors,
+     *  so I make an error handler for my message
+     */
+    function handleError(msg) {
+        let deepMsg = constructStatus(msg);  // this is just for illustration
+        // AppLogger functions accept the extraFrames parameter
+        l.warn("I'm in the error handler: ", deepMsg, new Options({extraFrames: 1}));
+    }
+    handleError("Root problem is here"); // all logging will cite this same line number
+    return `
+demo: WARN: demo.mjs:368: I'm in the error handler: demo: ERROR: demo.mjs:368: I'm deep in the error handler: Root problem is here
+`;
+}
 
 /**
  * Test numFramesInThisModule()
