@@ -1,3 +1,7 @@
+/** A logger, pre-declared for use throughout this class to enable internal logging
+ * - very meta and eating our own dogfood */
+var l = new AppLogger("apperror_js");
+
 /**
  * Represents options to be used with the functions in this module.
  * @param {*} aDict : contains key-value pairs for the options
@@ -119,7 +123,6 @@ var indexMatcher = new RegExp(/^index\..?js/); // index.js doesn't tell us much 
 
  */
 import * as process from 'process';
-import { l } from './demo.mjs';
 export function AppLogger(componentName, verbose, debug=false) {  
     this.component = makeASCII(componentName);
     this.debugTags = new Set();
