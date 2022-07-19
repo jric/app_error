@@ -2,17 +2,17 @@ import { AppError, AppLogger, AppStatus, Options } from './index.mjs';
 
 // Basic usage - logger
 
-export var l = new AppLogger('demo', 0 /* verbose */);
+export var moduleLogger = new AppLogger('demo', 0 /* verbose */);
 
 /**
  * Basic usage - illustrates using the logger
- * @param {*} l - an AppLogger instance to log onto
+ * @param {AppLogger} l - an instance to log onto
  */
 export function doBasicLogging(l) {
     l.error("I owe: $", 300 + 100, " dollars to my ex");
     l.warn("I don't have enough money in the bank:  $", 0);
     l.info("wise to pay your debts!");
-    l.debug("i probably shouldn't have borrowed gas money from her");
+    l.debug("i probably shouldn't borrow from her");
     l.verbose = 2;
     l.v1("I borrowed $400");
     l.v2("First it was $300");
@@ -22,24 +22,27 @@ export function doBasicLogging(l) {
 demo: ERROR: demo.js:38: I owe: $400 dollars to my ex
 demo: WARN: demo.js:39: I don't have enough money in the bank:  $0
 demo: INFO: demo.js:40: wise to pay your debts!
-demo: DEBUG: demo.js:41: i probably shouldn't have borrowed gas money from her
+demo: DEBUG: demo.js:41: i probably shouldn't borrow from her
 demo: V1: demo.js:43: I borrowed $400
 demo: V2: demo.js:44: First it was $300
 demo: V2: demo.js:45: Then it was another $100
 `;
 }
 
-// Basic usage - status
+// Basic usage - using a status object
 
-/** Illustrates using the AppStatus object */
-export function doBasicStatus(lChecked) {
+/** 
+ * Illustrates using the AppStatus object
+ * @param {AppLogger} l - an instance to log into
+ */
+export function doBasicStatus(l) {
     let s = new AppStatus();
-    if (s.ok) lChecked.info("we're doing fine");
+    if (s.ok) l.info("we're doing fine");
     
     s = new AppStatus("unable to find boot sector");
     s.addWarn("backup all data now");
-    if (s.hasErrors())
-        lChecked.error("We have a problem: ", s);  // shows whole status, inc. the warning
+    if (s.hasErrors()) // show whole status, inc. the warning
+        l.error("We have a problem: ", s);
     return `
 demo: INFO: demo.mjs:37: we're doing fine
 demo: ERROR: demo.mjs:43: We have a problem: ERROR: demo.mjs:39: unable to find boot sector; WARN: demo.mjs:40: backup all data now
@@ -51,7 +54,8 @@ demo: ERROR: demo.mjs:43: We have a problem: ERROR: demo.mjs:39: unable to find 
 /** Illustrates ensuring that verbose is explicitly set, if used */
 export function doCheckVerbose(l) {
     let l1 = new AppLogger('here we set verbosity', 0 /* verbosity */);
-    l1.v1("won't print (verbose=0), but also won't throw an error, because verbosity explicitly set");
+    l1.v1("won't print (verbose=0), but also won't throw an error, ",
+         "because verbosity explicitly set");
     let l2 = new AppLogger('here we did not set verbosity');
     try {
         l2.v1("won't print (verbosity not set); will throw an error");
@@ -125,7 +129,8 @@ export function doShowDebug(l) {
         l.ifDebug("spelling is a breeze", spellingTag);        // only shows if debug includes '*' or 'spelling'
     }
     
-    let l1 = new AppLogger('second-logger', 0 /* verbose */, true /* debug */);  // can set in the constructor
+    let l1 = new AppLogger('second-logger', 0 /* verbose */,
+        true /* debug */);  // can set in the constructor
     l1.diagStream = l.diagStream;                              // echo all data onto stream for logger, l
     showDebugLevel(l1);
     l1.setDebug(false);                                        // equivalent way to set
@@ -385,7 +390,7 @@ Usage:
   demo [--verbose]... [--debug]
   `;
     let args = docopt(usage, {argv: ['--verbose', '--verbose'], version: 'demo 1.0'});
-    l.v1("arguments from docopt: ", args);
+    moduleLogger.v1("arguments from docopt: ", args);
     l1.setFromArgs(args);
     showVerbosity(l1);  // will show how verbose we are, depending on which arguments were passed to demo
     return `

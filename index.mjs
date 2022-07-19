@@ -60,12 +60,29 @@ function isString(data) {
 }
 
 /**
+ * Recursively remove _SA variables, since they are only needed for deserializing, and add clutter for logging
+ * @param {*} obj - is edited in place
+ * @returns the edited object
+ */
+const matchSAPrivate = /^_SA/;
+function removeSAPrivate(obj) {
+    if (! obj instanceof Object) return obj;
+    for (const prop of Object.getOwnPropertyNames(obj)) {
+        if (matchSAPrivate.test(prop))
+            delete obj[prop];
+        else if (obj[prop] instanceof Object)
+            obj[prop] = removeSAPrivate(obj[prop]);
+    }
+    return obj;
+}
+
+/**
  * Turn anything into a compact ASCII string
  * @param {*} s : object that we want to make into an ascii string
  * @param canonical : if true, strings are encoded as JSON (inside double-quotes)
  * @returns the ascii string
  */
- import * as serAny from 'serialize-anything';
+ import * as serAny from 'serialize-anything-circular';
 export function makeASCII(s, canonical) {
     if (isString(s))
         if (canonical)
@@ -82,8 +99,9 @@ export function makeASCII(s, canonical) {
         return '{' + Array.from(s.entries()).map((x) => makeASCII(x[0], true /* canonical */) + ':' + makeASCII(x[1], true /* canonical */)).join(',') + '}';
     else if (typeof s == 'object' && !Array.isArray(s) && s.toString !== Object.prototype.toString && typeof s.toString == 'function') {
         return s.toString();    
-    } else
-        return JSON.stringify(JSON.parse(serAny.serialize(s))._SA_Content);
+    } else {
+        return JSON.stringify(removeSAPrivate(JSON.parse(serAny.serialize(s))._SA_Content));
+    }
 }
 
 

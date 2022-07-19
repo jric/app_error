@@ -1,8 +1,9 @@
 {
   "name": "apperror_js",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "description": "Make logging and reporting of errors easier, more informative, and more consistent.",
   "main": "index.mjs",
+  "type": "module",
   "scripts": {
     "test": "mocha"
   },
@@ -15,12 +16,12 @@
   },
   "dependencies": {
     "lodash-es": "^4.17.21",
-    "stack-trace-anynode": "^1.0.0-pre3",
-    "serialize-anything": "^1.1.10"
+    "serialize-anything-circular": "^1.2.1",
+    "stack-trace-anynode": "^1.0.0-pre3"
   },
   "devDependencies": {
-    "mocha": "^10.0.0",
-    "docopt": "^0.6.2"
+    "docopt": "^0.6.2",
+    "mocha": "^10.0.0"
   },
   "keywords": [
     "logging"

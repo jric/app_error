@@ -1,15 +1,19 @@
-# app_error
+# apperror_js
 
 The purpose of this module is to make logging and reporting of errors easier, more informative, and more consistent.
 
 This is the javascript version of https://github.com/CheggEng/apperror.
 
-AppLogger logs messages to include
+Log messages include
 
 * The name of the system generating the message (helpful in pipelines)
 * The file name and line number where the log is written (helpful for quickly finding the relevant code)
 * The log level of the message (useful for quick identification and filtering)
 * The actual message
+
+Loggers can log any type of object with no hassle and optimum performance.
+
+Loggers can be set up to write to other streams, including in-memory status objects.
 
 In addition, there is a bunch of other helpful functionality, see demo code below.
 
@@ -20,17 +24,24 @@ Install with `npm i apperror_js` or put `apperror_js` into `package.json` depend
 Then in code:
 
 ```
-import { AppLogger, AppStatus, Options } from 'apperror'; // or just import some of these
+// or just import subset of these
+import { AppLogger, AppStatus, Options } from 'apperror';
 l = new AppLogger('demo');
-l.debug("This call won't build a big string from my list of numbers, ", [0, 1, 2, 3], " or serialize ",
-        my_complex_object, " unless debugging is turned on, so I can feel free to make lots of logging statements!");
+// objects are serialized directly to log (no string building)
+l.v1("Don't build string, ", [0, 1, 2, 3], " or serialize ",
+        my_complex_object, " unless verbose, so I can feel ",
+        "free to make lots of logging statements!");
 if (l.isSetDebug())
-    l.debug("I do want to protect logging inside conditional if I need to log with ", slowFunctionCall());
+    l.debug("I do want to protect logging inside conditional ",
+            "if I need to log with ", slowFunctionCall());
 ```
 Output
 ```
-demo: DEBUG: demo.mjs:25: This call won't build a big string from my list of numbers, [0, 1, 2, 3], or serialize { "complex": "object" } unless debugging is turned on, so I can feel free to make lots of logging statements!
-demo: DEBUG: demo.mjs:28: I do want to protect logging inside conditional if I need to log with output of slow function call
+demo: DEBUG: demo.mjs:25: Don't build string, [0, 1, 2, 3], or
+serialize { "complex": "object" } unless verbose, so I can feel
+free to make lots of logging statements!
+demo: DEBUG: demo.mjs:28: I do want to protect logging inside
+conditional if I need to log with output of slow function call
 ```
 
 ## Demo Code 
@@ -38,17 +49,17 @@ demo: DEBUG: demo.mjs:28: I do want to protect logging inside conditional if I n
 ```
 // Basic usage - logger
 
-export var l = new AppLogger('demo', 0 /* verbose */);
+export var moduleLogger = new AppLogger('demo', 0 /* verbose */);
 
 /**
  * Basic usage - illustrates using the logger
- * @param {*} l - an AppLogger instance to log onto
+ * @param {AppLogger} l - an instance to log onto
  */
 export function doBasicLogging(l) {
     l.error("I owe: $", 300 + 100, " dollars to my ex");
     l.warn("I don't have enough money in the bank:  $", 0);
     l.info("wise to pay your debts!");
-    l.debug("i probably shouldn't have borrowed gas money from her");
+    l.debug("i probably shouldn't borrow from her");
     l.verbose = 2;
     l.v1("I borrowed $400");
     l.v2("First it was $300");
@@ -58,24 +69,27 @@ export function doBasicLogging(l) {
 demo: ERROR: demo.js:38: I owe: $400 dollars to my ex
 demo: WARN: demo.js:39: I don't have enough money in the bank:  $0
 demo: INFO: demo.js:40: wise to pay your debts!
-demo: DEBUG: demo.js:41: i probably shouldn't have borrowed gas money from her
+demo: DEBUG: demo.js:41: i probably shouldn't borrow from her
 demo: V1: demo.js:43: I borrowed $400
 demo: V2: demo.js:44: First it was $300
 demo: V2: demo.js:45: Then it was another $100
 `;
 }
 
-// Basic usage - status
+// Basic usage - using a status object
 
-/** Illustrates using the AppStatus object */
-export function doBasicStatus(lChecked) {
+/** 
+ * Illustrates using the AppStatus object
+ * @param {AppLogger} l - an instance to log into
+ */
+export function doBasicStatus(l) {
     let s = new AppStatus();
-    if (s.ok) lChecked.info("we're doing fine");
+    if (s.ok) l.info("we're doing fine");
     
     s = new AppStatus("unable to find boot sector");
     s.addWarn("backup all data now");
-    if (s.hasErrors())
-        lChecked.error("We have a problem: ", s);  // shows whole status, inc. the warning
+    if (s.hasErrors()) // show whole status, inc. the warning
+        l.error("We have a problem: ", s);
     return `
 demo: INFO: demo.mjs:37: we're doing fine
 demo: ERROR: demo.mjs:43: We have a problem: ERROR: demo.mjs:39: unable to find boot sector; WARN: demo.mjs:40: backup all data now
@@ -87,7 +101,8 @@ demo: ERROR: demo.mjs:43: We have a problem: ERROR: demo.mjs:39: unable to find 
 /** Illustrates ensuring that verbose is explicitly set, if used */
 export function doCheckVerbose(l) {
     let l1 = new AppLogger('here we set verbosity', 0 /* verbosity */);
-    l1.v1("won't print (verbose=0), but also won't throw an error, because verbosity explicitly set");
+    l1.v1("won't print (verbose=0), but also won't throw an error, ",
+         "because verbosity explicitly set");
     let l2 = new AppLogger('here we did not set verbosity');
     try {
         l2.v1("won't print (verbosity not set); will throw an error");
@@ -161,7 +176,8 @@ export function doShowDebug(l) {
         l.ifDebug("spelling is a breeze", spellingTag);        // only shows if debug includes '*' or 'spelling'
     }
     
-    let l1 = new AppLogger('second-logger', 0 /* verbose */, true /* debug */);  // can set in the constructor
+    let l1 = new AppLogger('second-logger', 0 /* verbose */,
+        true /* debug */);  // can set in the constructor
     l1.diagStream = l.diagStream;                              // echo all data onto stream for logger, l
     showDebugLevel(l1);
     l1.setDebug(false);                                        // equivalent way to set
@@ -270,6 +286,7 @@ demo: INFO: demo.mjs:226: status hasValue(): true
 demo: INFO: demo.mjs:228: got value 'foo'
 `;
 }
+
 /** adding additional values to the status object */
 export function doAddAdditionalValuesToStatus(l) {
     let s = new AppStatus();
@@ -420,7 +437,7 @@ Usage:
   demo [--verbose]... [--debug]
   `;
     let args = docopt(usage, {argv: ['--verbose', '--verbose'], version: 'demo 1.0'});
-    l.v1("arguments from docopt: ", args);
+    moduleLogger.v1("arguments from docopt: ", args);
     l1.setFromArgs(args);
     showVerbosity(l1);  // will show how verbose we are, depending on which arguments were passed to demo
     return `
@@ -510,6 +527,7 @@ demo: INFO: demo.mjs:296: called as: node mocha
 
 ## Changelog
 
+1.6.1: Handle logging objects with circular references
 1.6.0: Added Status.hasValue()
 1.5.2: Remove reference to demo.mjs too!
 1.5.1: Remove demo.mjs from package; it was causing module to fail to load due to missing dev dependency
