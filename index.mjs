@@ -82,7 +82,7 @@ function removeSAPrivate(obj) {
  * @param canonical : if true, strings are encoded as JSON (inside double-quotes)
  * @returns the ascii string
  */
- import * as serAny from 'serialize-anything-circular';
+ import * as serAny from 'serialize-anything';
 export function makeASCII(s, canonical) {
     if (isString(s))
         if (canonical)
@@ -134,16 +134,23 @@ var indexMatcher = new RegExp(/^index\..?js/); // index.js doesn't tell us much 
  * Encapsulates some convenience functions for error-logging
  * 
  * @param component_name : prepended to all logs from this logger, so you know what system generated the noise
- * @param verbose : a number, 1+ turns on extra logging, and 0 for no extra logging, but must be set so we know we
- *    didn't just forget to intitialize it
- * @param debug : higher log level than verbose if true; FUTURE: set to a string or list of strings to turn on named
-           diagnostic streams.
+ * @param options :
+ *     verbose : a number, 1+ turns on extra logging, and 0 for no extra logging; if using verbosity-based logging,
+ *         this must be set or logging functions will throw error to remind you to set it
+ *     debug : set to a string or list of strings to turn on named diagnostic streams or set to '*' or true to
+ *         turn on all named log streams
 
  */
 import * as process from 'process';
-export function AppLogger(componentName, verbose, debug=false) {  
+export function AppLogger(componentName, options) {
+    if (options !== undefined && ! (options instanceof Object))
+        throw new AppError("options must be an object, but was ", typeof options);
+    if (arguments.length > 2)
+        throw new AppError("only two arguments accepted by AppLogger constructor");
     this.component = makeASCII(componentName);
     this.debugTags = new Set();
+    let debug = options?.debug??false;
+    let verbose = options?.verbose; // defaults to undefined
     if (typeof debug == 'boolean' && debug)
         this.debugTags.add('*');
     // diagnostic stream -- where to write messages

@@ -1,12 +1,14 @@
-import { AppError, AppLogger, AppStatus, Options } from './index.mjs';
+import { AppError, AppLogger, AppStatus, makeASCII, Options } from './index.mjs';
 
 // Basic usage - logger
 
-export var moduleLogger = new AppLogger('demo', 0 /* verbose */);
+export var moduleLogger = new AppLogger('demo', {verbose: 0});
 
+// ------------ Copy below this line into README ---------------------
 /**
- * Basic usage - illustrates using the logger
+ * Basic usage of the logger
  * @param {AppLogger} l - an instance to log onto
+ * @returns what will be logged to diagnostic stream set on logger
  */
 export function doBasicLogging(l) {
     l.error("I owe: $", 300 + 100, " dollars to my ex");
@@ -53,12 +55,12 @@ demo: ERROR: demo.mjs:43: We have a problem: ERROR: demo.mjs:39: unable to find 
 
 /** Illustrates ensuring that verbose is explicitly set, if used */
 export function doCheckVerbose(l) {
-    let l1 = new AppLogger('here we set verbosity', 0 /* verbosity */);
+    let l1 = new AppLogger('here we set verbosity', {verbose: 0});
     l1.v1("won't print (verbose=0), but also won't throw an error, ",
          "because verbosity explicitly set");
     let l2 = new AppLogger('here we did not set verbosity');
     try {
-        l2.v1("won't print (verbosity not set); will throw an error");
+        l2.v1("will throw an error (verbosity not set)");
     } catch (err) {
         l.err(err.toString());
     }
@@ -77,15 +79,15 @@ function showVerbosity(l) {
 /** Illustrates how to change verbosity of logger */
 export function doShowVerbose(l) {
     // helper function
-    let l1 = new AppLogger('demo', 2 /* verbose */);  // can set verbosity in the constructor
-    l1.diagStream = l.diagStream;
+    let l1 = new AppLogger('demo', {verbose: 2});  // can set verbosity in the constructor
+    l1.diagStream = l.diagStream;                  // mirror output to original logger
     showVerbosity(l1);
     l1.v1("a verbose message");
     l1.v2("a very verbose message");
     l1.v3("a very, very verbose message");
-    l1.verbose = 1;                                   // property way to set
+    l1.verbose = 1;                                // property way to set
     showVerbosity(l1);
-    l1.setVerbose(0);                                 // or set with setter
+    l1.setVerbose(0);                              // or set with setter
     showVerbosity(l1);
     return `
 demo: V1: demo.mjs:68: ok, we're verbose!
@@ -97,7 +99,6 @@ demo: V1: demo.mjs:68: ok, we're verbose!
 }
 
 /** turn anything in javascript to a compact string representation */
-import { makeASCII } from './index.mjs';
 export function doMakeASCII(l1) {
     l1.info('a string: ', makeASCII('foo'));
     l1.info('a number: ', makeASCII(42));
@@ -129,11 +130,10 @@ export function doShowDebug(l) {
         l.ifDebug("spelling is a breeze", spellingTag);        // only shows if debug includes '*' or 'spelling'
     }
     
-    let l1 = new AppLogger('second-logger', 0 /* verbose */,
-        true /* debug */);  // can set in the constructor
+    let l1 = new AppLogger('second-logger', {verbose: 0, debug: true});
     l1.diagStream = l.diagStream;                              // echo all data onto stream for logger, l
     showDebugLevel(l1);
-    l1.setDebug(false);                                        // equivalent way to set
+    l1.setDebug(false);                                        // can set (or reset)
     showDebugLevel(l1);
     l1.setDebug('math');                                       // can set to debug by tagname, but then we filter
     showDebugLevel(l1);
@@ -390,7 +390,6 @@ Usage:
   demo [--verbose]... [--debug]
   `;
     let args = docopt(usage, {argv: ['--verbose', '--verbose'], version: 'demo 1.0'});
-    moduleLogger.v1("arguments from docopt: ", args);
     l1.setFromArgs(args);
     showVerbosity(l1);  // will show how verbose we are, depending on which arguments were passed to demo
     return `
@@ -475,4 +474,22 @@ export function doAnnounceMyself(l) {
     return `
 demo: INFO: demo.mjs:296: called as: node mocha
 `;
+}
+
+// ------------ Copy above this line into README ---------------------
+
+export function doCheckGuardAgainstOldOptionStyle(l) {
+    let l1 = new AppLogger('logger1', {verbose: 1, debug: 0}); // make sure no error
+    let problem = 'did not fail when calling AppLogger constructor second argument that is not an object';
+    try {
+        l1 = new AppLogger('logger2', 0 /* verbose */);
+    } catch (err) {
+        try {
+            problem = 'did not fail when calling AppLogger constructor with too many arguments';
+            l1 = new AppLogger('logger1', 0 /* verbose */, true /* debug */);
+        } catch (err) {
+            return '';  // if we are here, everything went as planned
+        }
+    }
+    l.error(problem);
 }
