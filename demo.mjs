@@ -2,7 +2,7 @@ import { AppError, AppLogger, AppStatus, makeASCII, Options } from './index.mjs'
 
 // Basic usage - logger
 
-export var moduleLogger = new AppLogger('demo', {verbose: 0});
+var moduleLogger = new AppLogger('demo', {verbose: 0});
 
 // ------------ Copy below this line into README ---------------------
 /**
@@ -58,13 +58,21 @@ export function doCheckVerbose(l) {
     let l1 = new AppLogger('here we set verbosity', {verbose: 0});
     l1.v1("won't print (verbose=0), but also won't throw an error, ",
          "because verbosity explicitly set");
+    delete process.env.VERBOSE;
     let l2 = new AppLogger('here we did not set verbosity');
     try {
         l2.v1("will throw an error (verbosity not set)");
     } catch (err) {
         l.err(err.toString());
     }
-    return 'demo: ERROR: demo.js:38: Error: verbosity not set on logger \'here we did not set verbosity\'';
+    process.env.VERBOSE = 3;
+    l2 = new AppLogger('get verbosity from env');
+    l2.diagStream = l.diagStream;
+    l2.v1("can do 'verbose' logging now");
+    return `
+demo: ERROR: demo.mjs:66: Error: verbosity not set on logger 'here we did not set verbosity'
+get verbosity from env: V1: demo.mjs:70: can do 'verbose' logging now
+`
 }
 
 /** helper function to show effects of verbosity */

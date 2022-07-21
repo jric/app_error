@@ -150,7 +150,7 @@ export function AppLogger(componentName, options) {
     this.component = makeASCII(componentName);
     this.debugTags = new Set();
     let debug = options?.debug??false;
-    let verbose = options?.verbose; // defaults to undefined
+    let verbose = options?.verbose??process.env.VERBOSE; // defaults to undefined
     if (typeof debug == 'boolean' && debug)
         this.debugTags.add('*');
     // diagnostic stream -- where to write messages
@@ -167,9 +167,11 @@ export function AppLogger(componentName, options) {
         this.verbose = val;
     }
 
-    /** getVerbose() checks to make sure verbosity level has been set, else throws an error */
+    /** getVerbose() checks to make sure verbosity level has been set, else throws an error
+     * @returns verbosity level
+    */
     this.getVerbose = function() {
-        if (this.verbose==undefined) throw new Error("verbosity not set on logger '" + this.component + "'");
+        if (this.verbose===undefined) throw new Error("verbosity not set on logger '" + this.component + "'");
         return this.verbose;
     }
 

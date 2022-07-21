@@ -95,18 +95,25 @@ demo: ERROR: demo.mjs:43: We have a problem: ERROR: demo.mjs:39: unable to find 
 
 // Intermediate usage - different verbosity levels
 
-/** Illustrates ensuring that verbose is explicitly set, if used */
 export function doCheckVerbose(l) {
     let l1 = new AppLogger('here we set verbosity', {verbose: 0});
     l1.v1("won't print (verbose=0), but also won't throw an error, ",
          "because verbosity explicitly set");
+    delete process.env.VERBOSE;
     let l2 = new AppLogger('here we did not set verbosity');
     try {
         l2.v1("will throw an error (verbosity not set)");
     } catch (err) {
         l.err(err.toString());
     }
-    return 'demo: ERROR: demo.js:38: Error: verbosity not set on logger \'here we did not set verbosity\'';
+    process.env.VERBOSE = 3;
+    l2 = new AppLogger('get verbosity from env');
+    l2.diagStream = l.diagStream;
+    l2.v1("can do 'verbose' logging now");
+    return `
+demo: ERROR: demo.mjs:66: Error: verbosity not set on logger 'here we did not set verbosity'
+get verbosity from env: V1: demo.mjs:70: can do 'verbose' logging now
+`
 }
 
 /** helper function to show effects of verbosity */
@@ -521,6 +528,7 @@ demo: INFO: demo.mjs:296: called as: node mocha
 
 ## Changelog
 
+2.1.0: Get verbosity from environment if not set explicitly
 2.0.0: More standard / convenient options handling.
 1.6.1: Handle logging objects with circular references
 1.6.0: Added Status.hasValue()
