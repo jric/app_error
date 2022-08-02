@@ -115,6 +115,7 @@ export function doMakeASCII(l1) {
     l1.info('an array: ', makeASCII(['foo', 42]));
     l1.info('an object: ', {'foo': 42});
     l1.info('a map: ', makeASCII(new Map().set('foo', 42)));
+    l1.info('an Error: ', makeASCII(new Error('bad stuff happened')));
     return `
 demo: INFO: demo.mjs:98: a string: foo
 demo: INFO: demo.mjs:98: a number: 42
@@ -123,6 +124,8 @@ demo: INFO: demo.mjs:98: undefined: undefined
 demo: INFO: demo.mjs:98: an array: ["foo",42]
 demo: INFO: demo.mjs:98: an object: {"foo":42}
 demo: INFO: demo.mjs:98: a map: {"foo":42}
+demo: INFO: demo.mjs:118: an Error: Error: bad stuff happened
+    <STACKTRACE - 1 line>
 `;
 }
 

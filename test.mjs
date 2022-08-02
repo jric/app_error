@@ -17,6 +17,7 @@ var l = new AppLogger('demo');
 let normFilepath = new RegExp(/\S*demo[^:]*:\d+/, 'g');
 //let normPytest = new RegExp(/\S*pytest[3]?/);
 let normRemovePath = new RegExp(/\S+\/(\w+)/);  // replace file path with just the filename; too much variability in paths
+let replaceStackTrace = new RegExp(/^\s{0,4}at\s[^\n]*/m);
 function assertMatching(a, b) {
     let a_lines = trim(a).split("\n");
     let b_lines = trim(b).split("\n");
@@ -27,10 +28,14 @@ function assertMatching(a, b) {
         //a_line = a_line.replace(normPytest, 'pytest');
         while (a_line.match(normRemovePath))
             a_line = a_line.replace(normRemovePath, "$1");
+        if (a_line.match(replaceStackTrace))
+            a_line = a_line.replace(replaceStackTrace, '<STACKTRACE - 1 line>')
         let b_line = trim(b_lines[i]).replace(normFilepath, 'demo:<LINE>');
         //b_line = b_line.replace(normPytest, 'pytest');
         while (b_line.match(normRemovePath))
             b_line = b_line.replace(normRemovePath, "$1");
+        if (b_line.match(replaceStackTrace))
+            b_line = b_line.replace(replaceStackTrace, '<STACKTRACE - 1 line>')
         assert.equal(b_line, a_line); // actual, expected
     }
 }

@@ -83,6 +83,7 @@ function removeSAPrivate(obj) {
  * @returns the ascii string
  */
  import * as serAny from 'serialize-anything';
+ var firstTwoLines = new RegExp(/([^\n]*\n?){0,2}/m);
 export function makeASCII(s, canonical) {
     if (isString(s))
         if (canonical)
@@ -97,8 +98,12 @@ export function makeASCII(s, canonical) {
         return s.toString();
     else if (s instanceof Map)
         return '{' + Array.from(s.entries()).map((x) => makeASCII(x[0], true /* canonical */) + ':' + makeASCII(x[1], true /* canonical */)).join(',') + '}';
-    else if (typeof s == 'object' && !Array.isArray(s) && s.toString !== Object.prototype.toString && typeof s.toString == 'function') {
-        return s.toString();    
+    else if (typeof s == 'object') {
+        if (s.stack !== undefined && !(s instanceof AppStatus) && !(s instanceof AppError)) return firstTwoLines.exec(s.stack)[0];
+        if (!Array.isArray(s) && s.toString !== Object.prototype.toString && typeof s.toString == 'function') {
+            return s.toString();
+        }
+        return JSON.stringify(removeSAPrivate(JSON.parse(serAny.serialize(s))._SA_Content));
     } else {
         return JSON.stringify(removeSAPrivate(JSON.parse(serAny.serialize(s))._SA_Content));
     }
