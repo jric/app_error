@@ -156,6 +156,7 @@ export function doMakeASCII(l1) {
     l1.info('an array: ', makeASCII(['foo', 42]));
     l1.info('an object: ', {'foo': 42});
     l1.info('a map: ', makeASCII(new Map().set('foo', 42)));
+    l1.info('an Error: ', makeASCII(new Error('bad stuff happened')));
     return `
 demo: INFO: demo.mjs:98: a string: foo
 demo: INFO: demo.mjs:98: a number: 42
@@ -164,6 +165,8 @@ demo: INFO: demo.mjs:98: undefined: undefined
 demo: INFO: demo.mjs:98: an array: ["foo",42]
 demo: INFO: demo.mjs:98: an object: {"foo":42}
 demo: INFO: demo.mjs:98: a map: {"foo":42}
+demo: INFO: demo.mjs:118: an Error: Error: bad stuff happened
+    <STACKTRACE - 1 line>
 `;
 }
 
@@ -528,6 +531,8 @@ demo: INFO: demo.mjs:296: called as: node mocha
 
 ## Changelog
 
+2.2.1: Upgraded version of serialize-any
+2.2.0: Log one line of stack trace when logging an object with stack (thrown object)
 2.1.0: Get verbosity from environment if not set explicitly
 2.0.0: More standard / convenient options handling.
 1.6.1: Handle logging objects with circular references
