@@ -1,6 +1,6 @@
 {
   "name": "apperror_js",
-  "version": "2.2.1",
+  "version": "2.2.2",
   "description": "Make logging and reporting of errors easier, more informative, and more consistent.",
   "main": "index.mjs",
   "type": "module",
@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "lodash-es": "^4.17.21",
-    "serialize-anything": "^1.2.2",
+    "serialize-anything": "^1.2.3",
     "stack-trace-anynode": "^1.0.0-pre3"
   },
   "devDependencies": {
