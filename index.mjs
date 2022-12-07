@@ -1,7 +1,3 @@
-/** A logger, pre-declared for use throughout this class to enable internal logging
- * - very meta and eating our own dogfood */
-var l = new AppLogger("apperror_js");
-
 /**
  * Represents options to be used with the functions in this module.
  * @param {*} aDict : contains key-value pairs for the options
@@ -425,6 +421,10 @@ export function AppLogger(componentName, options) {
 
     return this;
 }
+
+/** A logger, pre-declared for use throughout this class to enable internal logging
+ * - very meta and eating our own dogfood */
+ var l = new AppLogger("apperror_js");
 
 /**
  * AppStatus - object represents a status; can add diagnostics and values and retrieve them
