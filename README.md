@@ -531,6 +531,7 @@ demo: INFO: demo.mjs:296: called as: node mocha
 
 ## Changelog
 
+2.3.0: Added typescript types!
 2.2.1: Upgraded version of serialize-any
 2.2.0: Log one line of stack trace when logging an object with stack (thrown object)
 2.1.0: Get verbosity from environment if not set explicitly
@@ -548,9 +549,10 @@ demo: INFO: demo.mjs:296: called as: node mocha
 
 ### to publish new version of apperror_js
 
-1. Update version in package.json, using semantic versioning
-2. Re-paste demo code above (if changed)
-3. Update Changelog section above
-4. git commit -a; git push
-5. npm login (if needed)
-6. npm publish
+1. run tests:  npm test
+2. Update version in package.json, using semantic versioning
+3. Re-paste demo code above (if changed)
+4. Update Changelog section above
+5. git commit -a; git push
+6. npm login (if needed)
+7. npm publish
