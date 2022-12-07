@@ -1,15 +1,14 @@
 {
   "name": "apperror_js",
-  "version": "2.3.0",
+  "version": "2.2.2",
   "description": "Make logging and reporting of errors easier, more informative, and more consistent.",
-  "main": "build/index.mjs",
-  "types": "build/index.d.ts",
+  "main": "index.mjs",
   "type": "module",
   "scripts": {
     "test": "mocha"
   },
   "files": [
-    "/build"
+    "index.mjs"
   ],
   "repository": {
     "type": "git",
