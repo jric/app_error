@@ -554,5 +554,5 @@ demo: INFO: demo.mjs:296: called as: node mocha
 3. Re-paste demo code above (if changed)
 4. Update Changelog section above
 5. git commit -a; git push
-6. npm login (if needed)
-7. npm publish
+6. npm login --registry https://registry.npmjs.org/ (if needed)
+7. npm publish --registry https://registry.npmjs.org/

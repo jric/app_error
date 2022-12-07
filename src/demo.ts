@@ -1,4 +1,4 @@
-import { AppError, AppLogger, AppStatus, makeASCII, Options } from './index.mjs';
+import { AppError, AppLogger, AppStatus, makeASCII, Options } from './index';
 
 // Basic usage - logger
 

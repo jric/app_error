@@ -2,9 +2,9 @@ import * as assert from 'assert';
 import { Transform } from 'stream';
 
 import { AssertionError } from 'assert';
-import * as Demo from './demo.mjs';
+import * as Demo from './src/demo.mjs';
 
-import { AppLogger } from './index.mjs';
+import { AppLogger } from './src/index.mjs';
 import { trim } from 'lodash-es';
 var l = new AppLogger('demo');
 

@@ -1,21 +1,21 @@
-/** A logger, pre-declared for use throughout this class to enable internal logging
- * - very meta and eating our own dogfood */
-var l = new AppLogger("apperror_js");
-
 /**
  * Represents options to be used with the functions in this module.
  * @param {*} aDict : contains key-value pairs for the options
  */
-export function Options(aDict) {
-    for (let [key, value] of Object.entries(aDict)) {
-        this[key] = value;
-    }
+export class Options extends Map<string> {
+    constructor(aDict: object) {
+        super();
+        
+        for (let [key, value] of Object.entries(aDict)) {
+            this[key] = value;
+        }
 
-    this.addFrames = function(number) {
-        this.extraFrames = (this.extraFrames??0) + number;
-    }
+        this.addFrames = function(number) {
+            this.extraFrames = (this.extraFrames??0) + number;
+        }
 
-    return this;
+        return this;
+    }
 }
 
 /**
@@ -147,284 +147,290 @@ var indexMatcher = new RegExp(/^index\..?js/); // index.js doesn't tell us much 
 
  */
 import * as process from 'process';
-export function AppLogger(componentName, options) {
-    if (options !== undefined && ! (options instanceof Object))
-        throw new AppError("options must be an object, but was ", typeof options);
-    if (arguments.length > 2)
-        throw new AppError("only two arguments accepted by AppLogger constructor");
-    this.component = makeASCII(componentName);
-    this.debugTags = new Set();
-    let debug = options?.debug??false;
-    let verbose = options?.verbose??process.env.VERBOSE; // defaults to undefined
-    if (typeof debug == 'boolean' && debug)
-        this.debugTags.add('*');
-    // diagnostic stream -- where to write messages
-    this.diagStream = process.stderr;
-    // may need something with acquire() and release() to keep output from
-    //   garbling; omit this for now
-    // this.lock = undefined
-    this.verbose = verbose;
+export class AppLogger {
+    constructor(componentName: string, options?: object) {
+        if (options !== undefined && ! (options instanceof Object))
+            throw new AppError("options must be an object, but was ", typeof options);
+        if (arguments.length > 2)
+            throw new AppError("only two arguments accepted by AppLogger constructor");
+        this.component = makeASCII(componentName);
+        this.debugTags = new Set();
+        let debug = options?.debug??false;
+        let verbose = options?.verbose??process.env.VERBOSE; // defaults to undefined
+        if (typeof debug == 'boolean' && debug)
+            this.debugTags.add('*');
+        // diagnostic stream -- where to write messages
+        this.diagStream = process.stderr;
+        // may need something with acquire() and release() to keep output from
+        //   garbling; omit this for now
+        // this.lock = undefined
+        this.verbose = verbose;
 
-    /** for folks who prefer the Java bean style setter
-     * @param {*} val : should be a number, typically between 0-3; 0 is mute, 3 is very verbose
-    */
-    this.setVerbose = function(val) {
-        this.verbose = val;
-    }
-
-    /** getVerbose() checks to make sure verbosity level has been set, else throws an error
-     * @returns verbosity level
-    */
-    this.getVerbose = function() {
-        if (this.verbose===undefined) throw new Error("verbosity not set on logger '" + this.component + "'");
-        return this.verbose;
-    }
-
-    /**
-     * Turns on debugging, which is similar to verbose, but a different channel of logs.
-     * This channel can have sub-channels which are named, so you can turn on debugging for a
-     *   certain module or class of functions as desired.
-     * 
-     * @param {*} tagsOrBool : default true; if true, turns on all debug-level logs; if a list of
-     *   strings, turns on corresponding debug channels.
-     */
-    this.setDebug = function(tagsOrBool=true) {
-        if (tagsOrBool === true)
-            tagsOrBool = ['*'];
-        else if (tagsOrBool === false) {
-            this.debugTags.clear();
-            tagsOrBool = [];
-        } else if (isString(tagsOrBool))
-            tagsOrBool = [tagsOrBool];
-        try {
-            for (let tag of tagsOrBool) {
-                this.debugTags.add(tag);
-                this.info(tag + " debugging enabled",
-                        new Options({"extraFrames": numFramesInThisModule()}));
-            }
-        } catch (e) {
-            throw new TypeError("Invalid type of argument for setDebug(): " + typeof tagsOrBool + ": " + e.toString());
+        /** for folks who prefer the Java bean style setter
+         * @param {*} val : should be a number, typically between 0-3; 0 is mute, 3 is very verbose
+        */
+        this.setVerbose = function(val) {
+            this.verbose = val;
         }
-    }
 
-    /**
-     * Returns true if debugging is on
-     * 
-     * @param {*} tag : check only for the given tag
-     */
-    this.isSetDebug = function(tag=null) {
-        if (tag !== null)
-            return tag in this.debugTags;
-        return !this.debugTags.isEmpty();
-    }
+        /** getVerbose() checks to make sure verbosity level has been set, else throws an error
+         * @returns verbosity level
+        */
+        this.getVerbose = function() {
+            if (this.verbose===undefined) throw new Error("verbosity not set on logger '" + this.component + "'");
+            return this.verbose;
+        }
 
-    /**
-     * Set the verbose and debug levels from an object which should either be
-     * - a dictionary with keys '--verbose' and '--debug', or
-     * - an object with attributes 'verbose' and 'debug'
-     * Value of debug can be a comma-seperated list of channel names to enable debugging for,
-     *   or they can be passed as separate options
-    */
-    this.setFromArgs = function(args) {
-        let verbose = args['verbose'] ?? args['--verbose'] ?? (typeof args.get == 'function' ? args.get('--verbose') : 0);
-        this.verbose = (typeof verbose == 'object' ? verbose.length : verbose) ?? verbose | 0; // convert to number
-    
-        let debug = args['debug'] ?? args['--debug'] ?? (typeof args.get == 'function' ? args.get('--debug') : false);
+        /**
+         * Turns on debugging, which is similar to verbose, but a different channel of logs.
+         * This channel can have sub-channels which are named, so you can turn on debugging for a
+         *   certain module or class of functions as desired.
+         * 
+         * @param {*} tagsOrBool : default true; if true, turns on all debug-level logs; if a list of
+         *   strings, turns on corresponding debug channels.
+         */
+        this.setDebug = function(tagsOrBool=true) {
+            if (tagsOrBool === true)
+                tagsOrBool = ['*'];
+            else if (tagsOrBool === false) {
+                this.debugTags.clear();
+                tagsOrBool = [];
+            } else if (isString(tagsOrBool))
+                tagsOrBool = [tagsOrBool];
+            try {
+                for (let tag of tagsOrBool) {
+                    this.debugTags.add(tag);
+                    this.info(tag + " debugging enabled",
+                            new Options({"extraFrames": numFramesInThisModule()}));
+                }
+            } catch (e) {
+                throw new TypeError("Invalid type of argument for setDebug(): " + typeof tagsOrBool + ": " + e.toString());
+            }
+        }
+
+        /**
+         * Returns true if debugging is on
+         * 
+         * @param {*} tag : check only for the given tag
+         */
+        this.isSetDebug = function(tag=null) {
+            if (tag !== null)
+                return tag in this.debugTags;
+            return !this.debugTags.isEmpty();
+        }
+
+        /**
+         * Set the verbose and debug levels from an object which should either be
+         * - a dictionary with keys '--verbose' and '--debug', or
+         * - an object with attributes 'verbose' and 'debug'
+         * Value of debug can be a comma-seperated list of channel names to enable debugging for,
+         *   or they can be passed as separate options
+        */
+        this.setFromArgs = function(args) {
+            let verbose = args['verbose'] ?? args['--verbose'] ?? (typeof args.get == 'function' ? args.get('--verbose') : 0);
+            this.verbose = (typeof verbose == 'object' ? verbose.length : verbose) ?? verbose | 0; // convert to number
         
-        let debugTags = [];
+            let debug = args['debug'] ?? args['--debug'] ?? (typeof args.get == 'function' ? args.get('--debug') : false);
+            
+            let debugTags = [];
 
-        try {
-            for (let tag of debug)
-                debugTags.push(...tag.split(','));
-        } catch {
-             // debug option that is not iterable treated as true/false instead
-             if (debug) debugTags.push('*');
+            try {
+                for (let tag of debug)
+                    debugTags.push(...tag.split(','));
+            } catch {
+                // debug option that is not iterable treated as true/false instead
+                if (debug) debugTags.push('*');
+            }
+
+            this.setDebug(debugTags);
         }
 
-        this.setDebug(debugTags);
-    }
-
-    /**
-     * Used to write diagnostic message at given log level.
-     * 
-     * @param {*} lvl - any string to indicate log level, e.g. 'INFO', 'WARN', 'ERROR', 'DEBUG', 'V1", etc.
-     * @param {*} msg - first component of a message to write
-     * @param  {...any} moreMsg - more components of the message; the last item may be an options object with
-     *    fields:
-     *       * extraFrames:  a positive integer indicating how many stack frames to
-     *           go up before reporting the code location of this diagnostic [default: 0]
-     *       * asString:  set true if you want a string back instead of printing to
-     *           this.diagStream
-     * @returns the diagnostic string if 'asString' set, else the AppLogger
-     */
-    this.commonOut = function(lvl, msg, ...moreMsg) {
-        let options = getOptions(moreMsg);
-        let extraFrames = (options?.extraFrames ?? 0) + 2 /* get above commonOut() and error()/warn()/etc */;
-        let asString = options?.asString ?? false;
-        let formatted = this.component + ": " + lvl + ": " +
-            adorn(msg, ...moreMsg, new Options({"extraFrames": extraFrames}));
-        if (asString)
-            return formatted;
-        else {
-            /* if self.lock is not None:
-                self.lock.acquire() */
-            this.diagStream.write(formatted + "\n");
-            /*
-            if self.lock is not None:
-                self.lock.release() */
-        }
-    }
-
-    /**
-     * announceMyself() Writes diagnostic indicating arguments used to execute current program.
-     * @param {*} asString [default false] indicates whether to return a string, or write INFO level log message
-     * @returns 
-     */
-    this.announceMyself = function(asString=false) {
-        return this.info("called as: ", process.argv.join(' '),
-                     new Options({"extraFrames": 1, "asString": asString}));
-    }
-
-
-    /**
-     * Only if debugging is set, log the given message.
-     * 
-     * Can be called like
-     *   ifDebug(msg)
-     * or with any or all log options:
-     *   ifDebug(msg, new Options({"tag": "mytag",  // select only certain tagged messages
-     *                             "extraFrames": 1,
-     *                             "asString": true}))
-     */
-    this.ifDebug = function(msg, ...moreMsg) {
-        let options = getOptions(moreMsg);
-        let tag = '*';
-        if ('tag' in options) { 
-            tag = options.tag;
-            if (! isString(tag)) {
-                throw new Error("Tag must be a string, but is ", typeof tag, "; tag: ", makeASCII(tag));
+        /**
+         * Used to write diagnostic message at given log level.
+         * 
+         * @param {*} lvl - any string to indicate log level, e.g. 'INFO', 'WARN', 'ERROR', 'DEBUG', 'V1", etc.
+         * @param {*} msg - first component of a message to write
+         * @param  {...any} moreMsg - more components of the message; the last item may be an options object with
+         *    fields:
+         *       * extraFrames:  a positive integer indicating how many stack frames to
+         *           go up before reporting the code location of this diagnostic [default: 0]
+         *       * asString:  set true if you want a string back instead of printing to
+         *           this.diagStream
+         * @returns the diagnostic string if 'asString' set, else the AppLogger
+         */
+        this.commonOut = function(lvl, msg, ...moreMsg) {
+            let options = getOptions(moreMsg);
+            let extraFrames = (options?.extraFrames ?? 0) + 2 /* get above commonOut() and error()/warn()/etc */;
+            let asString = options?.asString ?? false;
+            let formatted = this.component + ": " + lvl + ": " +
+                adorn(msg, ...moreMsg, new Options({"extraFrames": extraFrames}));
+            if (asString)
+                return formatted;
+            else {
+                /* if self.lock is not None:
+                    self.lock.acquire() */
+                this.diagStream.write(formatted + "\n");
+                /*
+                if self.lock is not None:
+                    self.lock.release() */
             }
         }
-        //this.debug('tag: ', tag, '; debugTags: ', this.debugTags);
-        if (this.debugTags.has(tag) || this.debugTags.has('*')) {
-            //options.extraFrames = 1;
-            let tagAdorn = '';
-            if (tag != '*')
-                tagAdorn = '[' + tag + ']';
-            this.commonOut('DEBUG' + tagAdorn, msg, ...moreMsg, options);
+
+        /**
+         * announceMyself() Writes diagnostic indicating arguments used to execute current program.
+         * @param {*} asString [default false] indicates whether to return a string, or write INFO level log message
+         * @returns 
+         */
+        this.announceMyself = function(asString=false) {
+            return this.info("called as: ", process.argv.join(' '),
+                        new Options({"extraFrames": 1, "asString": asString}));
         }
-    }
-    
-    /**
-     * Logs the given message iff verbose is set to at least level 1
-     * @param {*} msg : message to log
-     * @param  {...any} moreMsg and Options object which may contain:
-     *   extraFrames:  a positive integer indicating how many stack frames to
-     *     go up before reporting the code location of this diagnostic [default: 0]
-     *   asString [default: false]:  set true if you want a string back instead of 
-     *     printing to this.diagStream
-     */
-    this.v1 = function(msg, ...moreMsg) {
-        if (this.getVerbose() > 0)
-            this.commonOut('V1', msg, ...moreMsg);
-    }
 
-    /**
-     * Logs the given message iff verbose is set to at least level 2
-     * @param {*} msg : message to log
-     * @param  {...any} moreMsg and Options object which may contain:
-     *   extraFrames:  a positive integer indicating how many stack frames to
-     *     go up before reporting the code location of this diagnostic [default: 0]
-     *   asString [default: false]:  set true if you want a string back instead of 
-     *     printing to this.diagStream
-     */
-    this.v2 = function(msg, ...moreMsg) {
-        if (this.getVerbose() >= 2)
-            this.commonOut('V2', msg, ...moreMsg);
-    }
 
-    /**
-     * Logs the given message iff verbose is set to at least level 3
-     * @param {*} msg : message to log
-     * @param  {...any} moreMsg last part can be Options object which may contain:
-     *   extraFrames:  a positive integer indicating how many stack frames to
-     *     go up before reporting the code location of this diagnostic [default: 0]
-     *   asString [default: false]:  set true if you want a string back instead of 
-     *     printing to this.diagStream
-     */
-     this.v3 = function(msg, ...moreMsg) {
-        if (this.getVerbose() >= 3)
-            this.commonOut('V3', msg, ...moreMsg);
-    }
+        /**
+         * Only if debugging is set, log the given message.
+         * 
+         * Can be called like
+         *   ifDebug(msg)
+         * or with any or all log options:
+         *   ifDebug(msg, new Options({"tag": "mytag",  // select only certain tagged messages
+         *                             "extraFrames": 1,
+         *                             "asString": true}))
+         */
+        this.ifDebug = function(msg, ...moreMsg) {
+            let options = getOptions(moreMsg);
+            let tag = '*';
+            if ('tag' in options) { 
+                tag = options.tag;
+                if (! isString(tag)) {
+                    throw new Error("Tag must be a string, but is ", typeof tag, "; tag: ", makeASCII(tag));
+                }
+            }
+            //this.debug('tag: ', tag, '; debugTags: ', this.debugTags);
+            if (this.debugTags.has(tag) || this.debugTags.has('*')) {
+                //options.extraFrames = 1;
+                let tagAdorn = '';
+                if (tag != '*')
+                    tagAdorn = '[' + tag + ']';
+                this.commonOut('DEBUG' + tagAdorn, msg, ...moreMsg, options);
+            }
+        }
+        
+        /**
+         * Logs the given message iff verbose is set to at least level 1
+         * @param {*} msg : message to log
+         * @param  {...any} moreMsg and Options object which may contain:
+         *   extraFrames:  a positive integer indicating how many stack frames to
+         *     go up before reporting the code location of this diagnostic [default: 0]
+         *   asString [default: false]:  set true if you want a string back instead of 
+         *     printing to this.diagStream
+         */
+        this.v1 = function(msg, ...moreMsg) {
+            if (this.getVerbose() > 0)
+                this.commonOut('V1', msg, ...moreMsg);
+        }
 
-    /**
-     * ifVerbose
-     * Only log if verbose, or if verbosity higher than given verbosity.
-     * @param {*} msg the message to log when verbosity > 0
-     * @param  {...any} moreMsg - more message to log, last arg can be Options:
-     *   level: only log if verbosity above this level
-     *   extraFrames:  a positive integer indicating how many stack frames to
-     *     go up before reporting the code location of this diagnostic [default: 0]
-     *   asString [default: false]:  set true if you want a string back instead of 
-     *     printing to this.diagStream
-     */
-    this.ifVerbose = function(msg, ...moreMsg) {
-        let options = getOptions(moreMsg);
-        let lvl = options.level ?? 1;
-        l.ifDebug("lvl: ", lvl, "; this.verbose: ", this.verbose);
-        if (lvl <= this.verbose)
-            this.commonOut('V' + lvl, msg, ...moreMsg, options);
-    }
+        /**
+         * Logs the given message iff verbose is set to at least level 2
+         * @param {*} msg : message to log
+         * @param  {...any} moreMsg and Options object which may contain:
+         *   extraFrames:  a positive integer indicating how many stack frames to
+         *     go up before reporting the code location of this diagnostic [default: 0]
+         *   asString [default: false]:  set true if you want a string back instead of 
+         *     printing to this.diagStream
+         */
+        this.v2 = function(msg, ...moreMsg) {
+            if (this.getVerbose() >= 2)
+                this.commonOut('V2', msg, ...moreMsg);
+        }
 
-    /**
-     * This function always writes a message prepended by DEBUG (use ifdebug() for conditional logging)
-     * @param {*} msg : message to log
-     * @param  {...any} moreMsg last part can be Options object which may contain:
-     *   extraFrames:  a positive integer indicating how many stack frames to
-     *     go up before reporting the code location of this diagnostic [default: 0]
-     *   asString [default: false]:  set true if you want a string back instead of 
-     *     printing to this.diagStream
-     *   
-     */
-    this.debug = function(msg, ...moreMsg) {
-        return this.commonOut('DEBUG', msg, ...moreMsg);
-    }
+        /**
+         * Logs the given message iff verbose is set to at least level 3
+         * @param {*} msg : message to log
+         * @param  {...any} moreMsg last part can be Options object which may contain:
+         *   extraFrames:  a positive integer indicating how many stack frames to
+         *     go up before reporting the code location of this diagnostic [default: 0]
+         *   asString [default: false]:  set true if you want a string back instead of 
+         *     printing to this.diagStream
+         */
+        this.v3 = function(msg, ...moreMsg) {
+            if (this.getVerbose() >= 3)
+                this.commonOut('V3', msg, ...moreMsg);
+        }
 
-    /**
-     * Final argument can be options object with these keys:
-     * extraFrames:  a positive integer indicating how many stack frames to
-     *   go up before reporting the code location of this diagnostic [default: 0]
-     * asString:  set true if you want a string back instead of printing to
-     *   this.diagStream
-     * */
-    this.info = function(msg, ...moreMsg) {
-        return this.commonOut('INFO', msg, ...moreMsg);
-    }
+        /**
+         * ifVerbose
+         * Only log if verbose, or if verbosity higher than given verbosity.
+         * @param {*} msg the message to log when verbosity > 0
+         * @param  {...any} moreMsg - more message to log, last arg can be Options:
+         *   level: only log if verbosity above this level
+         *   extraFrames:  a positive integer indicating how many stack frames to
+         *     go up before reporting the code location of this diagnostic [default: 0]
+         *   asString [default: false]:  set true if you want a string back instead of 
+         *     printing to this.diagStream
+         */
+        this.ifVerbose = function(msg, ...moreMsg) {
+            let options = getOptions(moreMsg);
+            let lvl = options.level ?? 1;
+            l.ifDebug("lvl: ", lvl, "; this.verbose: ", this.verbose);
+            if (lvl <= this.verbose)
+                this.commonOut('V' + lvl, msg, ...moreMsg, options);
+        }
 
-    /**
-     * Final argument can be options object with these keys:
-     * extraFrames:  a positive integer indicating how many stack frames to
-     *   go up before reporting the code location of this diagnostic [default: 0]
-     * asString:  set true if you want a string back instead of printing to
-     *   this.diagStream
-     * */
-     this.warn = function(msg, ...moreMsg) {
-        return this.commonOut('WARN', msg, ...moreMsg);
-    }
+        /**
+         * This function always writes a message prepended by DEBUG (use ifdebug() for conditional logging)
+         * @param {*} msg : message to log
+         * @param  {...any} moreMsg last part can be Options object which may contain:
+         *   extraFrames:  a positive integer indicating how many stack frames to
+         *     go up before reporting the code location of this diagnostic [default: 0]
+         *   asString [default: false]:  set true if you want a string back instead of 
+         *     printing to this.diagStream
+         *   
+         */
+        this.debug = function(msg, ...moreMsg) {
+            return this.commonOut('DEBUG', msg, ...moreMsg);
+        }
 
-    /**
-     * Final argument can be options object with these keys:
-     * extraFrames:  a positive integer indicating how many stack frames to
-     *   go up before reporting the code location of this diagnostic [default: 0]
-     * asString:  set true if you want a string back instead of printing to
-     *   this.diagStream
-     * */
-    this.error = this.err = function(msg, ...moreMsg) {
-        return this.commonOut('ERROR', msg, ...moreMsg);
-    }
+        /**
+         * Final argument can be options object with these keys:
+         * extraFrames:  a positive integer indicating how many stack frames to
+         *   go up before reporting the code location of this diagnostic [default: 0]
+         * asString:  set true if you want a string back instead of printing to
+         *   this.diagStream
+         * */
+        this.info = function(msg, ...moreMsg) {
+            return this.commonOut('INFO', msg, ...moreMsg);
+        }
 
-    return this;
+        /**
+         * Final argument can be options object with these keys:
+         * extraFrames:  a positive integer indicating how many stack frames to
+         *   go up before reporting the code location of this diagnostic [default: 0]
+         * asString:  set true if you want a string back instead of printing to
+         *   this.diagStream
+         * */
+        this.warn = function(msg, ...moreMsg) {
+            return this.commonOut('WARN', msg, ...moreMsg);
+        }
+
+        /**
+         * Final argument can be options object with these keys:
+         * extraFrames:  a positive integer indicating how many stack frames to
+         *   go up before reporting the code location of this diagnostic [default: 0]
+         * asString:  set true if you want a string back instead of printing to
+         *   this.diagStream
+         * */
+        this.error = this.err = function(msg, ...moreMsg) {
+            return this.commonOut('ERROR', msg, ...moreMsg);
+        }
+
+        return this;
+    }
 }
+
+/** A logger, pre-declared for use throughout this class to enable internal logging
+ * - very meta and eating our own dogfood */
+ var l: AppLogger = new AppLogger("apperror_js");
 
 /**
  * AppStatus - object represents a status; can add diagnostics and values and retrieve them
