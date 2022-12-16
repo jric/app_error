@@ -1,4 +1,6 @@
-import { AppError, AppLogger, AppStatus, makeASCII, Options } from './index.mjs';
+let pkgRoot = './dist-cjs';
+
+import { AppError, AppLogger, AppStatus, makeASCII, Options } from './dist-cjs/index.js';
 
 // Basic usage - logger
 
@@ -445,7 +447,7 @@ demo: WARN: demo.mjs:368: I'm in the error handler: demo: ERROR: demo.mjs:368: I
 ### frame 3: b()
 ### frame 4: a()
  */
-import { numFramesInThisModule } from './index.mjs';
+import { numFramesInThisModule } from './dist-cjs/index.js';
 export function doTellMeHowDeepIAm(l) {
     function a() {
         l.info("num frames deep in this module: ", numFramesInThisModule());
@@ -466,7 +468,7 @@ demo: INFO: demo.mjs:58: num frames deep in this module: 2
 `;
 }
 
-import { adorn } from './index.mjs';
+import { adorn } from './dist-cjs/index.js';
 export function doAdornMessage(l) {
     l.info(adorn("Hello!"));  // adorn and info both stamp linenumber (we wouldn't normally use both)
     l.info(adorn("Hello", " world!"));

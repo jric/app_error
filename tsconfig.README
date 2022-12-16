@@ -1,0 +1,13 @@
+From https://techsparx.com/nodejs/typescript/modules-01.html
+
+The lib line describes the JavaScript language features to enable, with these settings saying to turn on all the latest features
+The target line says to output ES2021 code
+The module line describes the output module format which will be used, where es2022 ensures use of ES6 modules
+The moduleResolution parameter says to look up modules in node_modules directories just like NodeJS does.
+The outDir parameter says to compile files into the named directory, and the rootDir parameter says to compile the files in the named directory.
+The declaration and declarationMap parameters says to generate declaration files.
+The inlineSourceMap and inlineSources say to generate source-map data inside JavaScript source files.
+
+allowJs means we can use Javascript as the input
+
+What that means is our source code will be in lib and TypeScript will compile it into dist.

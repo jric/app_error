@@ -1,0 +1,16 @@
+{
+    "compilerOptions": {
+        "lib": [ "es6" ],
+        "target": "ES6",
+        "module": "commonjs",
+        "moduleResolution": "Node",
+        "outDir": "./dist-cjs",
+        "rootDir": "./lib",
+        "declaration": true,
+        "declarationMap": true,
+        "inlineSourceMap": true,
+        "inlineSources": true,
+        "allowJs": true
+    },
+    "include": ["./lib/*.js"]
+}

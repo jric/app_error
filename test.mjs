@@ -4,7 +4,7 @@ import { Transform } from 'stream';
 import { AssertionError } from 'assert';
 import * as Demo from './demo.mjs';
 
-import { AppLogger } from './index.mjs';
+import { AppLogger } from './dist-cjs/index.js';
 import { trim } from 'lodash-es';
 var l = new AppLogger('demo');
 
