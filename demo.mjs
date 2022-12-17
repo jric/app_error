@@ -1,5 +1,3 @@
-let pkgRoot = './dist-cjs';
-
 import { AppError, AppLogger, AppStatus, makeASCII, Options } from './dist-cjs/index.js';
 
 // Basic usage - logger
