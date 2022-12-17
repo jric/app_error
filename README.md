@@ -21,11 +21,21 @@ In addition, there is a bunch of other helpful functionality, see demo code belo
 
 Install with `npm i apperror_js` or put `apperror_js` into `package.json` dependencies.
 
-Then in code:
+For ESM code:
+```
+import { AppLogger, AppStatus, AppError, Options, makeASCII } from 'apperror';
+```
+
+For commonJS code:
 
 ```
-// or just import subset of these
-import { AppLogger, AppStatus, AppError, Options, makeASCII } from 'apperror';
+var apperror=require("./dist-cjs");
+const { AppLogger, AppStatus, AppError, Options, makeASCII } = apperror;
+
+```
+
+Then:
+```
 l = new AppLogger('demo');
 // objects are serialized directly to log (no string building)
 l.v1("Don't build string, ", [0, 1, 2, 3], " or serialize ",
