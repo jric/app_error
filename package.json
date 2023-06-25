@@ -1,6 +1,6 @@
 {
   "name": "apperror_js",
-  "version": "2.4.0",
+  "version": "2.4.1",
   "description": "Make logging and reporting of errors easier, more informative, and more consistent.",
   "type": "commonjs",
   "scripts": {
@@ -9,13 +9,19 @@
     "watch:es6": "npx tsc -p tsconfig-es6.json --watch",
     "watch:cjs": "npx tsc -p tsconfig-cjs.json --watch",
     "build": "concurrently npm:build:*",
-    "build:es6": "npx tsc -p tsconfig-es6.json",
-    "build:cjs": "npx tsc -p tsconfig-cjs.json",
+    "build:es6": "npx tsc -p tsconfig-es6.json && node ./create-dist-package.json.js es6",
+    "build:cjs": "npx tsc -p tsconfig-cjs.json && node ./create-dist-package.json.js cjs",
     "test": "mocha"
   },
   "exports": {
-    "require": "./dist-cjs/index.js",
-    "import": "./dist-es6/index.js"
+    ".": {
+      "require": "./dist-cjs/index.js",
+      "import": "./dist-es6/index.js"
+    },
+    "./es6": "./dist-es6/index.js",
+    "./es6/": "./dist-es6/",
+    "./cjs": "./dist-cjs/index.js",
+    "./cjs/": "./dist-cjs/"
   },
   "main": "./dist-cjs/index.js",
   "types": "./dist-cjs/index.d.ts",

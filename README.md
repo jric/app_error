@@ -23,13 +23,17 @@ Install with `npm i apperror_js` or put `apperror_js` into `package.json` depend
 
 For ESM code:
 ```
-import { AppLogger, AppStatus, AppError, Options, makeASCII } from 'apperror';
+import { AppLogger, AppStatus, AppError, Options, makeASCII } from 'apperror_js';
+or if that fails use
+import { AppLogger, AppStatus, AppError, Options, makeASCII } from 'apperror_js/es6';
 ```
 
 For commonJS code:
 
 ```
-var apperror=require("./dist-cjs");
+var apperror=require("apperror_js");
+of if that fails use
+var apperror=require("apperror_js/cjs");
 const { AppLogger, AppStatus, AppError, Options, makeASCII } = apperror;
 
 ```
@@ -541,6 +545,7 @@ demo: INFO: demo.mjs:296: called as: node mocha
 
 ## Changelog
 
+2.4.1: Make commonJS and ESM packages available with explicit import in case default doesn't work
 2.4.0: Publish both commonJS and ESM packages, per https://techsparx.com/nodejs/typescript/modules-01.html
 2.2.1: Upgraded version of serialize-any
 2.2.0: Log one line of stack trace when logging an object with stack (thrown object)
