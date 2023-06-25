@@ -545,20 +545,20 @@ demo: INFO: demo.mjs:296: called as: node mocha
 
 ## Changelog
 
-2.4.2: Make commonJS and ESM packages available with explicit import in case default doesn't work
-2.4.0: Publish both commonJS and ESM packages, per https://techsparx.com/nodejs/typescript/modules-01.html
-2.2.1: Upgraded version of serialize-any
-2.2.0: Log one line of stack trace when logging an object with stack (thrown object)
-2.1.0: Get verbosity from environment if not set explicitly
-2.0.0: More standard / convenient options handling.
-1.6.1: Handle logging objects with circular references
-1.6.0: Added Status.hasValue()
-1.5.2: Remove reference to demo.mjs too!
-1.5.1: Remove demo.mjs from package; it was causing module to fail to load due to missing dev dependency
-1.5.0: Added AppError / AppLogger.setFromArgs(), implemented AppStatus.getValue(), exposed makeASCII(); added assorted tests/fixes
-1.4.2: Another patch for a reference error when loaded from other modules.
-1.4.1: Removed unused member of AppLogger causing reference error when loaded from other modules.
-1.4.0: Added AppStatus and a bunch of tests.
+- 2.4.2: Make commonJS and ESM packages available with explicit import in case default doesn't work
+- 2.4.0: Publish both commonJS and ESM packages, per https://techsparx.com/nodejs/typescript/modules-01.html
+- 2.2.1: Upgraded version of serialize-any
+- 2.2.0: Log one line of stack trace when logging an object with stack (thrown object)
+- 2.1.0: Get verbosity from environment if not set explicitly
+- 2.0.0: More standard / convenient options handling.
+- 1.6.1: Handle logging objects with circular references
+- 1.6.0: Added Status.hasValue()
+- 1.5.2: Remove reference to demo.mjs too!
+- 1.5.1: Remove demo.mjs from package; it was causing module to fail to load due to missing dev dependency
+- 1.5.0: Added AppError / AppLogger.setFromArgs(), implemented AppStatus.getValue(), exposed makeASCII(); added assorted tests/fixes
+- 1.4.2: Another patch for a reference error when loaded from other modules.
+- 1.4.1: Removed unused member of AppLogger causing reference error when loaded from other modules.
+- 1.4.0: Added AppStatus and a bunch of tests.
 
 ## For Maintainers
 
