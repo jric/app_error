@@ -545,6 +545,7 @@ demo: INFO: demo.mjs:296: called as: node mocha
 
 ## Changelog
 
+- 2.4.4: Define package as files in dist* instead of just dist
 - 2.4.3: I think I created the previous build without compiling the code first, so completely foobarred
 - 2.4.2: Make commonJS and ESM packages available with explicit import in case default doesn't work
 - 2.4.0: Publish both commonJS and ESM packages, per https://techsparx.com/nodejs/typescript/modules-01.html
