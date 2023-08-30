@@ -1,6 +1,6 @@
 {
   "name": "apperror_js",
-  "version": "2.4.4",
+  "version": "2.4.5",
   "description": "Make logging and reporting of errors easier, more informative, and more consistent.",
   "type": "commonjs",
   "scripts": {
@@ -26,7 +26,7 @@
   "main": "./dist-cjs/index.js",
   "types": "./dist-cjs/index.d.ts",
   "files": [
-    "./dist*"
+    "dist*/**/*"
   ],
   "repository": {
     "type": "git",

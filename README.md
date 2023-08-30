@@ -545,6 +545,7 @@ demo: INFO: demo.mjs:296: called as: node mocha
 
 ## Changelog
 
+- 2.4.5: Fix the dist* to grab all the files underneath
 - 2.4.4: Define package as files in dist* instead of just dist
 - 2.4.3: I think I created the previous build without compiling the code first, so completely foobarred
 - 2.4.2: Make commonJS and ESM packages available with explicit import in case default doesn't work
@@ -572,5 +573,7 @@ demo: INFO: demo.mjs:296: called as: node mocha
 4. git commit -a; git push
 5. npm run build
 6. npm test
-7. npm login (if needed)
-8. npm publish
+7. npm pack (if needed)
+8. tar tzf <the generated tarball> (if needed)
+9. npm login (if needed)
+10. npm publish
