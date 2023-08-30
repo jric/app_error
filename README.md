@@ -545,6 +545,7 @@ demo: INFO: demo.mjs:296: called as: node mocha
 
 ## Changelog
 
+- 2.4.3: I think I created the previous build without compiling the code first, so completely foobarred
 - 2.4.2: Make commonJS and ESM packages available with explicit import in case default doesn't work
 - 2.4.0: Publish both commonJS and ESM packages, per https://techsparx.com/nodejs/typescript/modules-01.html
 - 2.2.1: Upgraded version of serialize-any
@@ -568,5 +569,7 @@ demo: INFO: demo.mjs:296: called as: node mocha
 2. Re-paste demo code above (if changed)
 3. Update Changelog section above
 4. git commit -a; git push
-5. npm login (if needed)
-6. npm publish
+5. npm run build
+6. npm test
+7. npm login (if needed)
+8. npm publish
