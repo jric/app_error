@@ -569,12 +569,12 @@ demo: INFO: demo.mjs:296: called as: node mocha
 
 ### to publish new version of apperror_js
 
-1. Update version in package.json, using semantic versioning
-2. Re-paste demo code above (if changed)
-3. Update Changelog section above
-4. git commit -a; git push
-5. npm run build
-6. npm test
+1. npm run build
+2. npm test
+3. Update version in package.json, using semantic versioning
+4. Re-paste demo code above (if changed)
+5. Update Changelog section above
+6. git commit -a; git push
 7. npm pack (if needed to see what will go into the package)
 8. tar tzf <the generated tarball> (if needed to see what went in the package)
 9. npm login (if needed)
