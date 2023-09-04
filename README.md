@@ -574,7 +574,7 @@ demo: INFO: demo.mjs:296: called as: node mocha
 4. git commit -a; git push
 5. npm run build
 6. npm test
-7. npm pack (if needed)
-8. tar tzf <the generated tarball> (if needed)
+7. npm pack (if needed to see what will go into the package)
+8. tar tzf <the generated tarball> (if needed to see what went in the package)
 9. npm login (if needed)
 10. npm publish
