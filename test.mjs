@@ -35,7 +35,8 @@ function assertMatching(a, b) {
         while (b_line.match(normRemovePath))
             b_line = b_line.replace(normRemovePath, "$1");
         if (b_line.match(replaceStackTrace))
-            b_line = b_line.replace(replaceStackTrace, '<STACKTRACE - 1 line>')
+            b_line = b_line.replace(replaceStackTrace, '<STACKTRACE - 1 line>');
+        b_line = b_line.replace("processChild.js", "jest");
         assert.equal(b_line, a_line); // actual, expected
     }
 }

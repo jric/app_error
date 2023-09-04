@@ -545,6 +545,7 @@ demo: INFO: demo.mjs:296: called as: node mocha
 
 ## Changelog
 
+- 2.4.7: Use stacktrace-parser instead of callsite for more portability
 - 2.4.6: Switch from mocha to jest to test the module
 - 2.4.5: Fix the dist* to grab all the files underneath
 - 2.4.4: Define package as files in dist* instead of just dist
