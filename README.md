@@ -545,6 +545,7 @@ demo: INFO: demo.mjs:296: called as: node mocha
 
 ## Changelog
 
+- 2.4.8: Fixed a couple short-circuit checks
 - 2.4.7: Use stacktrace-parser instead of callsite for more portability
 - 2.4.6: Switch from mocha to jest to test the module
 - 2.4.5: Fix the dist* to grab all the files underneath
