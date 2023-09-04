@@ -79,7 +79,7 @@ function assertLogOutputIsAsExpected(func, funcName) {
 
 }
 
-// Mocha test cases
+// Jest test cases
 describe('module', function() {
     for (let [key, val] of Object.entries(Demo)) {
         if (key.slice(0, 2) == 'do') {

@@ -483,7 +483,7 @@ export function doAdornMessage(l) {
 export function doAnnounceMyself(l) {
     l.announceMyself();  // can also be called with asString=True parameter if you don't want to log immediately
     return `
-demo: INFO: demo.mjs:296: called as: node mocha
+demo: INFO: demo.mjs:296: called as: node jest
 `;
 }
 

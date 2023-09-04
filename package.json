@@ -1,6 +1,6 @@
 {
   "name": "apperror_js",
-  "version": "2.4.5",
+  "version": "2.4.6",
   "description": "Make logging and reporting of errors easier, more informative, and more consistent.",
   "type": "commonjs",
   "scripts": {
@@ -11,7 +11,7 @@
     "build": "concurrently npm:build:*",
     "build:es6": "npx tsc -p tsconfig-es6.json && node ./create-dist-package.json.js es6",
     "build:cjs": "npx tsc -p tsconfig-cjs.json && node ./create-dist-package.json.js cjs",
-    "test": "mocha"
+    "test": "NODE_OPTIONS=--experimental-vm-modules npx jest"
   },
   "exports": {
     ".": {
@@ -37,12 +37,11 @@
     "serialize-anything": "^1.2.3"
   },
   "devDependencies": {
-    "lodash-es": "^4.17.21",
     "@types/node": "^18.11.15",
+    "jest": "^29.6.4",
     "concurrently": "^7.6.0",
     "docopt": "^0.6.2",
-    "mocha": "^10.0.0",
-    "ts-node": "^10.9.1",
+    "lodash-es": "^4.17.21",
     "typescript": "^4.9.3"
   },
   "keywords": [
@@ -53,5 +52,11 @@
   "bugs": {
     "url": "https://github.com/jric/apperror_js/issues"
   },
-  "homepage": "https://github.com/jric/apperror_js#readme"
+  "homepage": "https://github.com/jric/apperror_js#readme",
+  "jest": {
+    "transform": {},
+    "testMatch": [
+      "**/?(*.)+(test.[cm]js)"
+    ]
+  }
 }
